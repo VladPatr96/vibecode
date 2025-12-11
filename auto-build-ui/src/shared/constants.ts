@@ -147,6 +147,7 @@ export const IPC_CHANNELS = {
 
   // Ideation events (main -> renderer)
   IDEATION_PROGRESS: 'ideation:progress',
+  IDEATION_LOG: 'ideation:log',
   IDEATION_COMPLETE: 'ideation:complete',
   IDEATION_ERROR: 'ideation:error',
 

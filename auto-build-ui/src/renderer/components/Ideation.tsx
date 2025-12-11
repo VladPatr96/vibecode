@@ -37,6 +37,7 @@ import { Card } from './ui/card';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Switch } from './ui/switch';
+import { ScrollArea } from './ui/scroll-area';
 import {
   Tooltip,
   TooltipContent,
@@ -137,6 +138,7 @@ export function Ideation({ projectId }: IdeationProps) {
   const generationStatus = useIdeationStore((state) => state.generationStatus);
   const config = useIdeationStore((state) => state.config);
   const setConfig = useIdeationStore((state) => state.setConfig);
+  const logs = useIdeationStore((state) => state.logs);
 
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [activeTab, setActiveTab] = useState<string>('all');
@@ -188,8 +190,8 @@ export function Ideation({ projectId }: IdeationProps) {
   // Show generation progress
   if (generationStatus.phase !== 'idle' && generationStatus.phase !== 'complete') {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Card className="w-full max-w-md p-6">
+      <div className="flex h-full items-center justify-center p-4">
+        <Card className="w-full max-w-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <Sparkles className="h-6 w-6 text-primary animate-pulse" />
             <h2 className="text-lg font-semibold">Generating Ideas</h2>
@@ -202,6 +204,32 @@ export function Ideation({ projectId }: IdeationProps) {
               <span className="text-sm">{IDEATION_TYPE_LABELS[generationStatus.currentType]}</span>
             </div>
           )}
+
+          {/* Logs Section */}
+          {logs.length > 0 && (
+            <div className="mt-4">
+              <div className="flex items-center gap-2 mb-2">
+                <FileCode className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Activity Log</span>
+              </div>
+              <ScrollArea className="h-48 rounded-md border border-border bg-muted/30">
+                <div className="p-3 space-y-1 font-mono text-xs">
+                  {logs.map((log, index) => (
+                    <div
+                      key={index}
+                      className="text-muted-foreground leading-relaxed"
+                    >
+                      <span className="text-muted-foreground/50 mr-2 select-none">
+                        {String(index + 1).padStart(3, '0')}
+                      </span>
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+
           {generationStatus.error && (
             <div className="mt-4 p-3 bg-destructive/10 rounded-md text-destructive text-sm">
               {generationStatus.error}

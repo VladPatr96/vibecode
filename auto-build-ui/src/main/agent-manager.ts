@@ -293,49 +293,74 @@ export class AgentManager extends EventEmitter {
     let progressPhase = 'analyzing';
     let progressPercent = 10;
 
+    // Helper to emit logs - split multi-line output into individual log lines
+    const emitLogs = (log: string) => {
+      const lines = log.split('\n').filter(line => line.trim().length > 0);
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.length > 0) {
+          this.emit('ideation-log', projectId, trimmed);
+        }
+      }
+    };
+
     // Handle stdout
     childProcess.stdout?.on('data', (data: Buffer) => {
       const log = data.toString();
 
-      // Parse progress from output
-      if (log.includes('PROJECT INDEX')) {
+      // Emit all log lines for the activity log
+      emitLogs(log);
+
+      // Parse progress from output - track phase transitions
+      if (log.includes('PROJECT INDEX') || log.includes('PROJECT ANALYSIS')) {
         progressPhase = 'analyzing';
-        progressPercent = 20;
+        progressPercent = 15;
       } else if (log.includes('CONTEXT GATHERING')) {
         progressPhase = 'discovering';
-        progressPercent = 35;
-      } else if (log.includes('LOW_HANGING_FRUIT')) {
+        progressPercent = 25;
+      } else if (log.includes('LOW_HANGING_FRUIT') || log.includes('LOW-HANGING FRUIT')) {
         progressPhase = 'generating';
-        progressPercent = 50;
-      } else if (log.includes('UI_UX_IMPROVEMENTS')) {
+        progressPercent = 35;
+      } else if (log.includes('UI_UX_IMPROVEMENTS') || log.includes('UI/UX')) {
+        progressPhase = 'generating';
+        progressPercent = 45;
+      } else if (log.includes('HIGH_VALUE_FEATURES') || log.includes('HIGH VALUE') || log.includes('HIGH-VALUE')) {
+        progressPhase = 'generating';
+        progressPercent = 55;
+      } else if (log.includes('DOCUMENTATION_GAPS') || log.includes('DOCUMENTATION')) {
         progressPhase = 'generating';
         progressPercent = 65;
-      } else if (log.includes('HIGH_VALUE_FEATURES')) {
+      } else if (log.includes('SECURITY_HARDENING') || log.includes('SECURITY')) {
         progressPhase = 'generating';
-        progressPercent = 80;
-      } else if (log.includes('MERGING IDEAS')) {
+        progressPercent = 75;
+      } else if (log.includes('PERFORMANCE_OPTIMIZATIONS') || log.includes('PERFORMANCE')) {
         progressPhase = 'generating';
-        progressPercent = 90;
+        progressPercent = 85;
+      } else if (log.includes('MERGE') || log.includes('FINALIZE')) {
+        progressPhase = 'generating';
+        progressPercent = 92;
       } else if (log.includes('IDEATION COMPLETE')) {
         progressPhase = 'complete';
         progressPercent = 100;
       }
 
-      // Emit progress update
+      // Emit progress update with a clean message for the status bar
+      const statusMessage = log.trim().split('\n')[0].substring(0, 200);
       this.emit('ideation-progress', projectId, {
         phase: progressPhase,
         progress: progressPercent,
-        message: log.trim().substring(0, 200) // Truncate long messages
+        message: statusMessage
       });
     });
 
-    // Handle stderr
+    // Handle stderr - also emit as logs
     childProcess.stderr?.on('data', (data: Buffer) => {
       const log = data.toString();
+      emitLogs(log);
       this.emit('ideation-progress', projectId, {
         phase: progressPhase,
         progress: progressPercent,
-        message: log.trim().substring(0, 200)
+        message: log.trim().split('\n')[0].substring(0, 200)
       });
     });
 

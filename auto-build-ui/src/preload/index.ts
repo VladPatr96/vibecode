@@ -511,6 +511,22 @@ const electronAPI: ElectronAPI = {
     };
   },
 
+  onIdeationLog: (
+    callback: (projectId: string, log: string) => void
+  ): (() => void) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      projectId: string,
+      log: string
+    ): void => {
+      callback(projectId, log);
+    };
+    ipcRenderer.on(IPC_CHANNELS.IDEATION_LOG, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.IDEATION_LOG, handler);
+    };
+  },
+
   onIdeationComplete: (
     callback: (projectId: string, session: IdeationSession) => void
   ): (() => void) => {

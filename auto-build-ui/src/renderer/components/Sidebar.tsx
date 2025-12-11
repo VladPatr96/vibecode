@@ -102,6 +102,41 @@ export function Sidebar({
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in inputs
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement ||
+        (e.target as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      // Only handle shortcuts when a project is selected
+      if (!selectedProjectId) return;
+
+      // Check for modifier keys - we want plain key presses only
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      const key = e.key.toUpperCase();
+
+      // Find matching nav item
+      const allNavItems = [...projectNavItems, ...toolsNavItems];
+      const matchedItem = allNavItems.find((item) => item.shortcut === key);
+
+      if (matchedItem) {
+        e.preventDefault();
+        onViewChange?.(matchedItem.id);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedProjectId, onViewChange]);
+
   // Check for updates when project changes
   useEffect(() => {
     const checkUpdates = async () => {

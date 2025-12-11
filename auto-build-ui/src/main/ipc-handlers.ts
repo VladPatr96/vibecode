@@ -3160,6 +3160,13 @@ ${issue.body || 'No description provided.'}
     }
   });
 
+  agentManager.on('ideation-log', (projectId: string, log: string) => {
+    const mainWindow = getMainWindow();
+    if (mainWindow) {
+      mainWindow.webContents.send(IPC_CHANNELS.IDEATION_LOG, projectId, log);
+    }
+  });
+
   agentManager.on('ideation-complete', (projectId: string, session: IdeationSession) => {
     const mainWindow = getMainWindow();
     if (mainWindow) {

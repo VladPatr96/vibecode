@@ -15,6 +15,7 @@ interface IdeationState {
   session: IdeationSession | null;
   generationStatus: IdeationGenerationStatus;
   config: IdeationConfig;
+  logs: string[];
 
   // Actions
   setSession: (session: IdeationSession | null) => void;
@@ -23,6 +24,8 @@ interface IdeationState {
   updateIdeaStatus: (ideaId: string, status: IdeationStatus) => void;
   dismissIdea: (ideaId: string) => void;
   clearSession: () => void;
+  addLog: (log: string) => void;
+  clearLogs: () => void;
 }
 
 const initialGenerationStatus: IdeationGenerationStatus = {
@@ -43,6 +46,7 @@ export const useIdeationStore = create<IdeationState>((set) => ({
   session: null,
   generationStatus: initialGenerationStatus,
   config: initialConfig,
+  logs: [],
 
   // Actions
   setSession: (session) => set({ session }),
@@ -92,7 +96,14 @@ export const useIdeationStore = create<IdeationState>((set) => ({
     set({
       session: null,
       generationStatus: initialGenerationStatus
-    })
+    }),
+
+  addLog: (log) =>
+    set((state) => ({
+      logs: [...state.logs, log].slice(-100) // Keep last 100 logs
+    })),
+
+  clearLogs: () => set({ logs: [] })
 }));
 
 // Helper functions for loading ideation
@@ -107,6 +118,8 @@ export async function loadIdeation(projectId: string): Promise<void> {
 
 export function generateIdeation(projectId: string): void {
   const config = useIdeationStore.getState().config;
+  useIdeationStore.getState().clearLogs();
+  useIdeationStore.getState().addLog('Starting ideation generation...');
   useIdeationStore.getState().setGenerationStatus({
     phase: 'analyzing',
     progress: 0,
@@ -117,6 +130,8 @@ export function generateIdeation(projectId: string): void {
 
 export function refreshIdeation(projectId: string): void {
   const config = useIdeationStore.getState().config;
+  useIdeationStore.getState().clearLogs();
+  useIdeationStore.getState().addLog('Refreshing ideation...');
   useIdeationStore.getState().setGenerationStatus({
     phase: 'analyzing',
     progress: 0,
