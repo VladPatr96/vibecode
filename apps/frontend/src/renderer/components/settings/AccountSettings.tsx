@@ -75,7 +75,23 @@ export function AccountSettings({ settings, onSettingsChange, isOpen }: AccountS
   const { toast } = useToast();
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'claude-code' | 'custom-endpoints'>('claude-code');
+  const [activeTab, setActiveTab] = useState<'claude-code' | 'gemini' | 'openai' | 'custom-endpoints'>('claude-code');
+
+  // ============================================
+  // Gemini state
+  // ============================================
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [showGeminiApiKey, setShowGeminiApiKey] = useState(false);
+  const [isSavingGemini, setIsSavingGemini] = useState(false);
+  const [geminiConnected, setGeminiConnected] = useState(false);
+
+  // ============================================
+  // OpenAI state
+  // ============================================
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [showOpenaiApiKey, setShowOpenaiApiKey] = useState(false);
+  const [isSavingOpenai, setIsSavingOpenai] = useState(false);
+  const [openaiConnected, setOpenaiConnected] = useState(false);
 
   // ============================================
   // Claude Code (OAuth) state
@@ -101,7 +117,11 @@ export function AccountSettings({ settings, onSettingsChange, isOpen }: AccountS
     configDir: string;
     profileId: string;
     profileName: string;
+    providerType?: 'claude' | 'gemini';
   } | null>(null);
+
+  // Gemini auth terminal state
+  const [isAuthenticatingGemini, setIsAuthenticatingGemini] = useState(false);
 
   // ============================================
   // Custom Endpoints (API Profiles) state
@@ -197,6 +217,40 @@ export function AccountSettings({ settings, onSettingsChange, isOpen }: AccountS
         weeklyPercent: undefined,
       });
     });
+
+    // Add Gemini account if configured
+    if (geminiConnected || geminiApiKey) {
+      unifiedList.push({
+        id: 'gemini-default',
+        name: 'Gemini CLI',
+        type: 'gemini',
+        displayName: 'Gemini CLI',
+        identifier: geminiApiKey ? `API Key: ${geminiApiKey.substring(0, 8)}...` : 'Google OAuth',
+        isActive: false,
+        isNext: false,
+        isAvailable: geminiConnected || !!geminiApiKey,
+        hasUnlimitedUsage: true,
+        sessionPercent: undefined,
+        weeklyPercent: undefined,
+      });
+    }
+
+    // Add OpenAI account if configured
+    if (openaiConnected || openaiApiKey) {
+      unifiedList.push({
+        id: 'openai-default',
+        name: 'OpenAI Codex',
+        type: 'openai',
+        displayName: 'OpenAI Codex',
+        identifier: openaiApiKey ? `API Key: ${openaiApiKey.substring(0, 8)}...` : 'Configured',
+        isActive: false,
+        isNext: false,
+        isAvailable: openaiConnected || !!openaiApiKey,
+        hasUnlimitedUsage: true,
+        sessionPercent: undefined,
+        weeklyPercent: undefined,
+      });
+    }
 
     // Sort by priority order if available
     if (priorityOrder.length > 0) {
@@ -666,11 +720,19 @@ export function AccountSettings({ settings, onSettingsChange, isOpen }: AccountS
     >
       <div className="space-y-6">
         {/* Tabs for Claude Code vs Custom Endpoints */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'claude-code' | 'custom-endpoints')}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'claude-code' | 'gemini' | 'openai' | 'custom-endpoints')}>
           <TabsList className="w-full justify-start">
             <TabsTrigger value="claude-code" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
+              <span className="text-lg">🟠</span>
               {t('accounts.tabs.claudeCode')}
+            </TabsTrigger>
+            <TabsTrigger value="gemini" className="flex items-center gap-2">
+              <span className="text-lg">🔵</span>
+              Gemini CLI
+            </TabsTrigger>
+            <TabsTrigger value="openai" className="flex items-center gap-2">
+              <span className="text-lg">🟢</span>
+              OpenAI Codex
             </TabsTrigger>
             <TabsTrigger value="custom-endpoints" className="flex items-center gap-2">
               <Server className="h-4 w-4" />
@@ -1069,6 +1131,216 @@ export function AccountSettings({ settings, onSettingsChange, isOpen }: AccountS
                   )}
                   {tCommon('buttons.add')}
                 </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Gemini Tab Content */}
+          <TabsContent value="gemini">
+            <div className="rounded-lg bg-muted/30 border border-border p-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                Gemini CLI authenticates via Google OAuth. Click the button below to
+                open a terminal and run the authentication command.
+              </p>
+
+              <div className="space-y-4">
+                {/* Gemini Auth Terminal */}
+                {authTerminal && authTerminal.providerType === 'gemini' ? (
+                  <div className="mb-4">
+                    <div className="rounded-lg border border-blue-500/30 overflow-hidden" style={{ height: '320px' }}>
+                      <AuthTerminal
+                        terminalId={authTerminal.terminalId}
+                        configDir={authTerminal.configDir}
+                        profileName="Gemini CLI"
+                        onClose={() => {
+                          setAuthTerminal(null);
+                          setIsAuthenticatingGemini(false);
+                        }}
+                        onAuthSuccess={() => {
+                          setGeminiConnected(true);
+                          setAuthTerminal(null);
+                          setIsAuthenticatingGemini(false);
+                          toast({
+                            title: 'Gemini authenticated',
+                            description: 'Your Gemini CLI is now configured.',
+                          });
+                        }}
+                        onAuthError={(error) => {
+                          setAuthTerminal(null);
+                          setIsAuthenticatingGemini(false);
+                          toast({
+                            title: 'Authentication failed',
+                            description: error,
+                            variant: 'destructive',
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={async () => {
+                      setIsAuthenticatingGemini(true);
+                      try {
+                        // Generate unique terminal ID
+                        const terminalId = `gemini-auth-${Date.now()}`;
+
+                        // Create a terminal that runs `gemini auth login`
+                        const result = await window.electronAPI.createTerminal({
+                          id: terminalId,
+                          cols: 80,
+                          rows: 20,
+                        });
+
+                        if (result.success) {
+                          // Send the gemini auth command
+                          setTimeout(() => {
+                            window.electronAPI.sendTerminalInput(terminalId, 'gemini auth login\r');
+                          }, 500);
+
+                          setAuthTerminal({
+                            terminalId,
+                            configDir: '~/.gemini',
+                            profileId: 'gemini-default',
+                            profileName: 'Gemini CLI',
+                            providerType: 'gemini',
+                          });
+                        } else {
+                          throw new Error(result.error || 'Failed to create terminal');
+                        }
+                      } catch (err) {
+                        setIsAuthenticatingGemini(false);
+                        toast({
+                          title: 'Failed to start authentication',
+                          description: String(err),
+                          variant: 'destructive',
+                        });
+                      }
+                    }}
+                    disabled={isAuthenticatingGemini}
+                    className="w-full gap-2"
+                  >
+                    {isAuthenticatingGemini ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogIn className="h-4 w-4" />
+                    )}
+                    Authenticate with Google OAuth
+                  </Button>
+                )}
+
+                {geminiConnected && !authTerminal && (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <Check className="h-4 w-4" />
+                    Gemini CLI configured
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* OpenAI Tab Content */}
+          <TabsContent value="openai">
+            <div className="rounded-lg bg-muted/30 border border-border p-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                OpenAI uses API keys for authentication. Click the button below to
+                open the OpenAI dashboard and create a new API key.
+              </p>
+
+              <div className="space-y-4">
+                {/* Step 1: Open browser */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                      1
+                    </div>
+                    <span className="text-sm font-medium">Get your API key</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      window.electronAPI.openExternal?.('https://platform.openai.com/api-keys');
+                      toast({
+                        title: 'Browser opened',
+                        description: 'Create a new API key and paste it below.',
+                      });
+                    }}
+                    className="w-full gap-2"
+                  >
+                    <Globe className="h-4 w-4" />
+                    Open OpenAI Dashboard
+                  </Button>
+                </div>
+
+                {/* Step 2: Paste key */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                      2
+                    </div>
+                    <span className="text-sm font-medium">Paste your API key</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="openai-api-key"
+                        type={showOpenaiApiKey ? 'text' : 'password'}
+                        value={openaiApiKey}
+                        onChange={(e) => setOpenaiApiKey(e.target.value)}
+                        placeholder="sk-proj-..."
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                        onClick={() => setShowOpenaiApiKey(!showOpenaiApiKey)}
+                      >
+                        {showOpenaiApiKey ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <Button
+                      onClick={async () => {
+                        setIsSavingOpenai(true);
+                        try {
+                          await window.electronAPI.setEnvVariable?.('OPENAI_API_KEY', openaiApiKey);
+                          setOpenaiConnected(true);
+                          toast({
+                            title: 'OpenAI API key saved',
+                            description: 'Your OpenAI Codex CLI is now configured.',
+                          });
+                        } catch (err) {
+                          toast({
+                            title: 'Failed to save',
+                            description: String(err),
+                            variant: 'destructive',
+                          });
+                        } finally {
+                          setIsSavingOpenai(false);
+                        }
+                      }}
+                      disabled={!openaiApiKey || isSavingOpenai}
+                    >
+                      {isSavingOpenai ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Save'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {openaiConnected && (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <Check className="h-4 w-4" />
+                    OpenAI Codex CLI configured
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>

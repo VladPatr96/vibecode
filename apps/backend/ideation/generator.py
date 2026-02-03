@@ -17,8 +17,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from client import create_client
+from core.providers import create_provider
+from core.providers.types import ProviderType
 from phase_config import get_thinking_budget, resolve_model_id
 from ui import print_status
+
+# Import task_config for provider support
+from agents.task_config import get_task_provider
 
 # Ideation types
 IDEATION_TYPES = [
@@ -59,6 +64,7 @@ class IdeationGenerator:
         model: str = "sonnet",  # Changed from "opus" (fix #433)
         thinking_level: str = "medium",
         max_ideas_per_type: int = 5,
+        provider: str | None = None,
     ):
         self.project_dir = Path(project_dir)
         self.output_dir = Path(output_dir)
@@ -67,6 +73,7 @@ class IdeationGenerator:
         self.thinking_budget = get_thinking_budget(thinking_level)
         self.max_ideas_per_type = max_ideas_per_type
         self.prompts_dir = Path(__file__).parent.parent / "prompts"
+        self.provider = provider
 
     async def run_agent(
         self,
@@ -90,13 +97,28 @@ class IdeationGenerator:
         if additional_context:
             prompt += f"\n{additional_context}\n"
 
-        # Create client with thinking budget
-        client = create_client(
-            self.project_dir,
-            self.output_dir,
-            resolve_model_id(self.model),
-            max_thinking_tokens=self.thinking_budget,
-        )
+        # Determine provider type
+        provider_type = get_task_provider(self.output_dir, self.provider)
+
+        # Thinking budget only applies to Claude
+        effective_thinking = self.thinking_budget if provider_type == ProviderType.CLAUDE else None
+
+        # Create provider-specific client
+        if provider_type == ProviderType.CLAUDE:
+            client = create_client(
+                self.project_dir,
+                self.output_dir,
+                resolve_model_id(self.model),
+                max_thinking_tokens=effective_thinking,
+            )
+        else:
+            client = create_provider(
+                provider_type=provider_type,
+                project_dir=self.project_dir,
+                spec_dir=self.output_dir,
+                model=resolve_model_id(self.model),
+                agent_type="ideation",
+            )
 
         try:
             async with client:
@@ -184,12 +206,28 @@ Common fixes:
 Write the fixed JSON to the file now.
 """
 
-        client = create_client(
-            self.project_dir,
-            self.output_dir,
-            resolve_model_id(self.model),
-            max_thinking_tokens=self.thinking_budget,
-        )
+        # Determine provider type
+        provider_type = get_task_provider(self.output_dir, self.provider)
+
+        # Thinking budget only applies to Claude
+        effective_thinking = self.thinking_budget if provider_type == ProviderType.CLAUDE else None
+
+        # Create provider-specific client
+        if provider_type == ProviderType.CLAUDE:
+            client = create_client(
+                self.project_dir,
+                self.output_dir,
+                resolve_model_id(self.model),
+                max_thinking_tokens=effective_thinking,
+            )
+        else:
+            client = create_provider(
+                provider_type=provider_type,
+                project_dir=self.project_dir,
+                spec_dir=self.output_dir,
+                model=resolve_model_id(self.model),
+                agent_type="ideation_recovery",
+            )
 
         try:
             async with client:

@@ -3,6 +3,7 @@ Parallel Follow-up PR Reviewer
 ===============================
 
 PR follow-up reviewer using Claude Agent SDK subagents for parallel specialist analysis.
+Supports multiple providers: Claude (default), Gemini, OpenAI.
 
 The orchestrator analyzes incremental changes and delegates to specialized agents:
 - resolution-verifier: Verifies previous findings are addressed
@@ -30,7 +31,10 @@ if TYPE_CHECKING:
 from claude_agent_sdk import AgentDefinition
 
 try:
+    from ...agents.task_config import get_task_provider
     from ...core.client import create_client
+    from ...core.providers import create_provider
+    from ...core.providers.types import ProviderType
     from ...phase_config import get_thinking_budget, resolve_model_id
     from ..context_gatherer import _validate_git_ref
     from ..gh_client import GHClient
@@ -50,8 +54,11 @@ try:
     from .pydantic_models import ParallelFollowupResponse
     from .sdk_utils import process_sdk_stream
 except (ImportError, ValueError, SystemError):
+    from agents.task_config import get_task_provider
     from context_gatherer import _validate_git_ref
     from core.client import create_client
+    from core.providers import create_provider
+    from core.providers.types import ProviderType
     from gh_client import GHClient
     from models import (
         BRANCH_BEHIND_BLOCKER_MSG,
@@ -525,19 +532,32 @@ The SDK will run invoked agents in parallel automatically.
                 f"thinking_level={thinking_level}, thinking_budget={thinking_budget}"
             )
 
+            # Determine provider type
+            provider_type = get_task_provider(self.github_dir, getattr(self.config, 'provider', None))
+
             # Create client with subagents defined (using worktree path)
-            client = create_client(
-                project_dir=project_root,
-                spec_dir=self.github_dir,
-                model=model,
-                agent_type="pr_followup_parallel",
-                max_thinking_tokens=thinking_budget,
-                agents=self._define_specialist_agents(project_root),
-                output_format={
-                    "type": "json_schema",
-                    "schema": ParallelFollowupResponse.model_json_schema(),
-                },
-            )
+            # SDK subagents and output_format are Claude-specific features
+            if provider_type == ProviderType.CLAUDE:
+                client = create_client(
+                    project_dir=project_root,
+                    spec_dir=self.github_dir,
+                    model=model,
+                    agent_type="pr_followup_parallel",
+                    max_thinking_tokens=thinking_budget,
+                    agents=self._define_specialist_agents(project_root),
+                    output_format={
+                        "type": "json_schema",
+                        "schema": ParallelFollowupResponse.model_json_schema(),
+                    },
+                )
+            else:
+                client = create_provider(
+                    provider_type=provider_type,
+                    project_dir=project_root,
+                    spec_dir=self.github_dir,
+                    model=model,
+                    agent_type="pr_followup",
+                )
 
             self._report_progress(
                 "orchestrating",

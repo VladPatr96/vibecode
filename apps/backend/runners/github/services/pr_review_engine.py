@@ -3,6 +3,7 @@ PR Review Engine
 ================
 
 Core logic for multi-pass PR code review.
+Supports multiple providers: Claude (default), Gemini, OpenAI.
 """
 
 from __future__ import annotations
@@ -13,6 +14,9 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from ...agents.task_config import get_task_provider
+    from ...core.providers import create_provider
+    from ...core.providers.types import ProviderType
     from ...phase_config import resolve_model_id
     from ..context_gatherer import PRContext
     from ..models import (
@@ -26,7 +30,10 @@ try:
     from .prompt_manager import PromptManager
     from .response_parsers import ResponseParser
 except (ImportError, ValueError, SystemError):
+    from agents.task_config import get_task_provider
     from context_gatherer import PRContext
+    from core.providers import create_provider
+    from core.providers.types import ProviderType
     from models import (
         AICommentTriage,
         GitHubRunnerConfig,
@@ -221,14 +228,28 @@ class PRReviewEngine:
             else self.project_dir
         )
 
+        # Determine provider type
+        provider_type = get_task_provider(self.github_dir, getattr(self.config, 'provider', None))
+
         # Resolve model shorthand (e.g., "sonnet") to full model ID for API compatibility
         model = resolve_model_id(self.config.model or "sonnet")
-        client = create_client(
-            project_dir=project_root,
-            spec_dir=self.github_dir,
-            model=model,
-            agent_type="pr_reviewer",  # Read-only - no bash, no edits
-        )
+
+        # Create provider-specific client
+        if provider_type == ProviderType.CLAUDE:
+            client = create_client(
+                project_dir=project_root,
+                spec_dir=self.github_dir,
+                model=model,
+                agent_type="pr_reviewer",  # Read-only - no bash, no edits
+            )
+        else:
+            client = create_provider(
+                provider_type=provider_type,
+                project_dir=project_root,
+                spec_dir=self.github_dir,
+                model=model,
+                agent_type="pr_reviewer",
+            )
 
         result_text = ""
         try:
@@ -486,14 +507,28 @@ class PRReviewEngine:
             else self.project_dir
         )
 
+        # Determine provider type
+        provider_type = get_task_provider(self.github_dir, getattr(self.config, 'provider', None))
+
         # Resolve model shorthand (e.g., "sonnet") to full model ID for API compatibility
         model = resolve_model_id(self.config.model or "sonnet")
-        client = create_client(
-            project_dir=project_root,
-            spec_dir=self.github_dir,
-            model=model,
-            agent_type="pr_reviewer",  # Read-only - no bash, no edits
-        )
+
+        # Create provider-specific client
+        if provider_type == ProviderType.CLAUDE:
+            client = create_client(
+                project_dir=project_root,
+                spec_dir=self.github_dir,
+                model=model,
+                agent_type="pr_reviewer",  # Read-only - no bash, no edits
+            )
+        else:
+            client = create_provider(
+                provider_type=provider_type,
+                project_dir=project_root,
+                spec_dir=self.github_dir,
+                model=model,
+                agent_type="pr_reviewer",
+            )
 
         result_text = ""
         try:
@@ -546,14 +581,28 @@ class PRReviewEngine:
             else self.project_dir
         )
 
+        # Determine provider type
+        provider_type = get_task_provider(self.github_dir, getattr(self.config, 'provider', None))
+
         # Resolve model shorthand (e.g., "sonnet") to full model ID for API compatibility
         model = resolve_model_id(self.config.model or "sonnet")
-        client = create_client(
-            project_dir=project_root,
-            spec_dir=self.github_dir,
-            model=model,
-            agent_type="pr_reviewer",  # Read-only - no bash, no edits
-        )
+
+        # Create provider-specific client
+        if provider_type == ProviderType.CLAUDE:
+            client = create_client(
+                project_dir=project_root,
+                spec_dir=self.github_dir,
+                model=model,
+                agent_type="pr_reviewer",  # Read-only - no bash, no edits
+            )
+        else:
+            client = create_provider(
+                provider_type=provider_type,
+                project_dir=project_root,
+                spec_dir=self.github_dir,
+                model=model,
+                agent_type="pr_reviewer",
+            )
 
         result_text = ""
         try:

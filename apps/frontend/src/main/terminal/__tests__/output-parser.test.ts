@@ -11,6 +11,10 @@ import {
   extractEmail,
   hasRateLimitMessage,
   hasOAuthToken,
+  detectProviderRateLimit,
+  detectProviderBusyState,
+  detectProviderExit,
+  detectApiKeyError,
 } from '../output-parser';
 
 describe('output-parser', () => {
@@ -305,6 +309,138 @@ describe('output-parser', () => {
         const colorInsideEmail = "andr\x1b[1me\x1b[0m@mikalsenai.no's Organization";
         expect(extractEmail(colorInsideEmail)).toBe('andre@mikalsenai.no');
       });
+    });
+  });
+});
+
+// =============================================================================
+// Multi-Provider Tests
+// =============================================================================
+
+describe('Multi-Provider Support', () => {
+  describe('detectProviderRateLimit', () => {
+    describe('Claude rate limits', () => {
+      it('detects Claude rate limit message', () => {
+        const result = detectProviderRateLimit('Limit reached · resets Dec 17 at 6am');
+        expect(result).not.toBeNull();
+        expect(result?.provider).toBe('claude');
+        expect(result?.resetTime).toBe('Dec 17 at 6am');
+      });
+    });
+
+    describe('Gemini rate limits', () => {
+      it('detects Gemini 429 error', () => {
+        const result = detectProviderRateLimit('429 Too Many Requests', 'gemini');
+        expect(result).not.toBeNull();
+        expect(result?.provider).toBe('gemini');
+      });
+
+      it('detects Gemini quota exceeded', () => {
+        const result = detectProviderRateLimit('quota has been exceeded', 'gemini');
+        expect(result).not.toBeNull();
+        expect(result?.provider).toBe('gemini');
+      });
+
+      it('detects RESOURCE_EXHAUSTED error', () => {
+        const result = detectProviderRateLimit('RESOURCE_EXHAUSTED: quota exceeded', 'gemini');
+        expect(result).not.toBeNull();
+        expect(result?.provider).toBe('gemini');
+      });
+    });
+
+    describe('OpenAI rate limits', () => {
+      it('detects OpenAI rate limit message', () => {
+        const result = detectProviderRateLimit('Rate limit reached for gpt-4o', 'openai');
+        expect(result).not.toBeNull();
+        expect(result?.provider).toBe('openai');
+      });
+
+      it('detects tokens per minute limit', () => {
+        const result = detectProviderRateLimit('tokens per minute limit exceeded', 'openai');
+        expect(result).not.toBeNull();
+        expect(result?.provider).toBe('openai');
+      });
+    });
+
+    it('returns null when no rate limit detected', () => {
+      expect(detectProviderRateLimit('Normal output')).toBeNull();
+      expect(detectProviderRateLimit('Hello world', 'gemini')).toBeNull();
+      expect(detectProviderRateLimit('Processing...', 'openai')).toBeNull();
+    });
+  });
+
+  describe('detectProviderBusyState', () => {
+    describe('Claude busy states', () => {
+      it('detects Claude busy state', () => {
+        expect(detectProviderBusyState('● Working...', 'claude')).toBe('busy');
+        expect(detectProviderBusyState('Loading...', 'claude')).toBe('busy');
+      });
+
+      it('detects Claude idle state', () => {
+        expect(detectProviderBusyState('> ', 'claude')).toBe('idle');
+      });
+    });
+
+    describe('Gemini busy states', () => {
+      it('detects Gemini busy state', () => {
+        expect(detectProviderBusyState('Generating...', 'gemini')).toBe('busy');
+        expect(detectProviderBusyState('● Response', 'gemini')).toBe('busy');
+      });
+
+      it('detects Gemini idle state', () => {
+        expect(detectProviderBusyState('> ', 'gemini')).toBe('idle');
+      });
+    });
+
+    describe('OpenAI busy states', () => {
+      it('detects OpenAI busy state', () => {
+        expect(detectProviderBusyState('Generating...', 'openai')).toBe('busy');
+        expect(detectProviderBusyState('Running...', 'openai')).toBe('busy');
+      });
+
+      it('detects OpenAI idle state', () => {
+        expect(detectProviderBusyState('codex> ', 'openai')).toBe('idle');
+      });
+    });
+
+    it('returns null for unknown state', () => {
+      expect(detectProviderBusyState('Hello', 'claude')).toBeNull();
+      expect(detectProviderBusyState('Some text', 'gemini')).toBeNull();
+    });
+  });
+
+  describe('detectProviderExit', () => {
+    it('detects exit for all providers', () => {
+      expect(detectProviderExit('Goodbye!', 'claude')).toBe(true);
+      expect(detectProviderExit('user@host:~$ ', 'gemini')).toBe(true);
+      expect(detectProviderExit('Session ended', 'openai')).toBe(true);
+    });
+
+    it('returns false when provider is busy', () => {
+      expect(detectProviderExit('● Working...\nuser@host:~$ ', 'claude')).toBe(false);
+    });
+  });
+
+  describe('detectApiKeyError', () => {
+    describe('Gemini API key errors', () => {
+      it('detects invalid API key', () => {
+        expect(detectApiKeyError('API key not valid', 'gemini')).toBe(true);
+        expect(detectApiKeyError('Invalid API key provided', 'gemini')).toBe(true);
+        expect(detectApiKeyError('INVALID_ARGUMENT: API key is invalid', 'gemini')).toBe(true);
+      });
+    });
+
+    describe('OpenAI API key errors', () => {
+      it('detects invalid API key', () => {
+        expect(detectApiKeyError('Invalid API key provided', 'openai')).toBe(true);
+        expect(detectApiKeyError('Incorrect API key', 'openai')).toBe(true);
+        expect(detectApiKeyError('API key is invalid', 'openai')).toBe(true);
+      });
+    });
+
+    it('returns false for valid output', () => {
+      expect(detectApiKeyError('Hello world', 'gemini')).toBe(false);
+      expect(detectApiKeyError('Processing request', 'openai')).toBe(false);
     });
   });
 });

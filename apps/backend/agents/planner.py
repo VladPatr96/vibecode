@@ -3,12 +3,15 @@ Planner Agent Module
 ====================
 
 Handles follow-up planner sessions for adding new subtasks to completed specs.
+Supports multiple providers: Claude (default), Gemini, OpenAI.
 """
 
 import logging
 from pathlib import Path
 
 from core.client import create_client
+from core.providers import create_provider, get_provider_capabilities
+from core.providers.types import ProviderType
 from phase_config import get_phase_model, get_phase_thinking_budget
 from phase_event import ExecutionPhase, emit_phase
 from task_logger import (
@@ -28,6 +31,7 @@ from ui import (
 )
 
 from .session import run_agent_session
+from .task_config import get_task_provider, get_provider_thinking_budget as get_task_provider_thinking
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +41,7 @@ async def run_followup_planner(
     spec_dir: Path,
     model: str,
     verbose: bool = False,
+    provider: str | None = None,
 ) -> bool:
     """
     Run the follow-up planner to add new subtasks to a completed spec.
@@ -56,14 +61,26 @@ async def run_followup_planner(
     Args:
         project_dir: Root directory for the project
         spec_dir: Directory containing the completed spec
-        model: Claude model to use
+        model: Model to use (provider-specific)
         verbose: Whether to show detailed output
+        provider: Provider type ('claude', 'gemini', 'openai') - defaults to task config or 'claude'
 
     Returns:
         bool: True if planning completed successfully
     """
     from implementation_plan import ImplementationPlan
     from prompts import get_followup_planner_prompt
+
+    # Determine provider from task config or CLI
+    provider_type = get_task_provider(spec_dir, provider)
+    provider_caps = get_provider_capabilities(provider_type)
+
+    # Log provider info for non-Claude
+    if provider_type != ProviderType.CLAUDE:
+        print_status(f"Using provider: {provider_type.value.upper()}", "info")
+        if not provider_caps.get("supports_extended_thinking"):
+            print_status("Extended thinking: not supported", "warning")
+        print()
 
     # Initialize status manager for ccstatusline
     status_manager = StatusManager(project_dir)
@@ -94,13 +111,28 @@ async def run_followup_planner(
     # Create client with phase-specific model and thinking budget
     # Respects task_metadata.json configuration when no CLI override
     planning_model = get_phase_model(spec_dir, "planning", model)
-    planning_thinking_budget = get_phase_thinking_budget(spec_dir, "planning")
-    client = create_client(
-        project_dir,
-        spec_dir,
-        planning_model,
-        max_thinking_tokens=planning_thinking_budget,
-    )
+
+    # Get thinking budget (only for Claude)
+    planning_thinking_budget = None
+    if provider_type == ProviderType.CLAUDE:
+        planning_thinking_budget = get_phase_thinking_budget(spec_dir, "planning")
+
+    # Create provider-specific client
+    if provider_type == ProviderType.CLAUDE:
+        client = create_client(
+            project_dir,
+            spec_dir,
+            planning_model,
+            max_thinking_tokens=planning_thinking_budget,
+        )
+    else:
+        client = create_provider(
+            provider_type=provider_type,
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            model=planning_model,
+            agent_type="planner",
+        )
 
     # Generate follow-up planner prompt
     prompt = get_followup_planner_prompt(spec_dir)

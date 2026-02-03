@@ -32,7 +32,10 @@ from typing import Any
 from claude_agent_sdk import AgentDefinition  # noqa: F401
 
 try:
+    from ...agents.task_config import get_task_provider
     from ...core.client import create_client
+    from ...core.providers import create_provider
+    from ...core.providers.types import ProviderType
     from ...phase_config import get_thinking_budget, resolve_model_id
     from ..context_gatherer import PRContext, _validate_git_ref
     from ..gh_client import GHClient
@@ -57,8 +60,11 @@ try:
     )
     from .sdk_utils import process_sdk_stream
 except (ImportError, ValueError, SystemError):
+    from agents.task_config import get_task_provider
     from context_gatherer import PRContext, _validate_git_ref
     from core.client import create_client
+    from core.providers import create_provider
+    from core.providers.types import ProviderType
     from gh_client import GHClient
     from models import (
         BRANCH_BEHIND_BLOCKER_MSG,
@@ -494,21 +500,34 @@ Report findings with specific file paths, line numbers, and code evidence.
         prompt = self._build_specialist_prompt(config, context, project_root)
 
         try:
+            # Determine provider type
+            provider_type = get_task_provider(self.github_dir, getattr(self.config, 'provider', None))
+
             # Create SDK client for this specialist
             # Note: Agent type uses the generic "pr_reviewer" since individual
             # specialist types aren't registered in AGENT_CONFIGS. The specialist-specific
             # system prompt handles differentiation.
-            client = create_client(
-                project_dir=project_root,
-                spec_dir=self.github_dir,
-                model=model,
-                agent_type="pr_reviewer",
-                max_thinking_tokens=thinking_budget,
-                output_format={
-                    "type": "json_schema",
-                    "schema": SpecialistResponse.model_json_schema(),
-                },
-            )
+            # For non-Claude providers, we skip output_format as it's Claude-specific
+            if provider_type == ProviderType.CLAUDE:
+                client = create_client(
+                    project_dir=project_root,
+                    spec_dir=self.github_dir,
+                    model=model,
+                    agent_type="pr_reviewer",
+                    max_thinking_tokens=thinking_budget,
+                    output_format={
+                        "type": "json_schema",
+                        "schema": SpecialistResponse.model_json_schema(),
+                    },
+                )
+            else:
+                client = create_provider(
+                    provider_type=provider_type,
+                    project_dir=project_root,
+                    spec_dir=self.github_dir,
+                    model=model,
+                    agent_type="pr_reviewer",
+                )
 
             async with client:
                 await client.query(prompt)
@@ -791,18 +810,32 @@ The SDK will run invoked agents in parallel automatically.
         Returns:
             Configured SDK client instance
         """
-        return create_client(
-            project_dir=project_root,
-            spec_dir=self.github_dir,
-            model=model,
-            agent_type="pr_orchestrator_parallel",
-            max_thinking_tokens=thinking_budget,
-            agents=self._define_specialist_agents(project_root),
-            output_format={
-                "type": "json_schema",
-                "schema": ParallelOrchestratorResponse.model_json_schema(),
-            },
-        )
+        # Determine provider type
+        provider_type = get_task_provider(self.github_dir, getattr(self.config, 'provider', None))
+
+        # SDK subagents and output_format are Claude-specific features
+        if provider_type == ProviderType.CLAUDE:
+            return create_client(
+                project_dir=project_root,
+                spec_dir=self.github_dir,
+                model=model,
+                agent_type="pr_orchestrator_parallel",
+                max_thinking_tokens=thinking_budget,
+                agents=self._define_specialist_agents(project_root),
+                output_format={
+                    "type": "json_schema",
+                    "schema": ParallelOrchestratorResponse.model_json_schema(),
+                },
+            )
+        else:
+            # For non-Claude providers, use simple provider without subagents
+            return create_provider(
+                provider_type=provider_type,
+                project_dir=project_root,
+                spec_dir=self.github_dir,
+                model=model,
+                agent_type="pr_orchestrator",
+            )
 
     def _extract_structured_output(
         self, structured_output: dict[str, Any] | None, result_text: str
@@ -1791,17 +1824,32 @@ For EACH finding above:
 
             # Create validator client (inherits worktree filesystem access)
             try:
-                validator_client = create_client(
-                    project_dir=worktree_path,
-                    spec_dir=self.github_dir,
-                    model=model,
-                    agent_type="pr_finding_validator",
-                    max_thinking_tokens=get_thinking_budget("medium"),
-                    output_format={
-                        "type": "json_schema",
-                        "schema": FindingValidationResponse.model_json_schema(),
-                    },
-                )
+                # Determine provider type
+                provider_type = get_task_provider(self.github_dir, getattr(self.config, 'provider', None))
+
+                # Thinking budget only for Claude
+                effective_thinking = get_thinking_budget("medium") if provider_type == ProviderType.CLAUDE else None
+
+                if provider_type == ProviderType.CLAUDE:
+                    validator_client = create_client(
+                        project_dir=worktree_path,
+                        spec_dir=self.github_dir,
+                        model=model,
+                        agent_type="pr_finding_validator",
+                        max_thinking_tokens=effective_thinking,
+                        output_format={
+                            "type": "json_schema",
+                            "schema": FindingValidationResponse.model_json_schema(),
+                        },
+                    )
+                else:
+                    validator_client = create_provider(
+                        provider_type=provider_type,
+                        project_dir=worktree_path,
+                        spec_dir=self.github_dir,
+                        model=model,
+                        agent_type="pr_finding_validator",
+                    )
             except Exception as e:
                 logger.error(f"[PRReview] Failed to create validator client: {e}")
                 last_error = e

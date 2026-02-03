@@ -32,6 +32,8 @@ import {
   DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { FileExplorerPanel } from './FileExplorerPanel';
+import { NewTerminalDialog } from './terminal/NewTerminalDialog';
+import type { ProviderType, ProviderProfile } from './providers/ProviderSelector';
 import { cn } from '../lib/utils';
 import { useTerminalStore } from '../stores/terminal-store';
 import { useTaskStore } from '../stores/task-store';
@@ -80,6 +82,12 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
 
   // Expanded terminal state - when set, this terminal takes up the full grid space
   const [expandedTerminalId, setExpandedTerminalId] = useState<string | null>(null);
+
+  // New terminal dialog state for provider selection
+  const [isNewTerminalDialogOpen, setIsNewTerminalDialogOpen] = useState(false);
+
+  // Get setTerminalProvider from store
+  const setTerminalProvider = useTerminalStore((state) => state.setTerminalProvider);
 
   // Reset expanded terminal when project changes
   useEffect(() => {
@@ -248,11 +256,22 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isActive, addTerminal, canAddTerminal, projectPath, activeTerminalId, handleCloseTerminal]);
 
+  // Open new terminal dialog for provider selection
   const handleAddTerminal = useCallback(() => {
     if (canAddTerminal(projectPath)) {
-      addTerminal(projectPath, projectPath);
+      setIsNewTerminalDialogOpen(true);
     }
-  }, [addTerminal, canAddTerminal, projectPath]);
+  }, [canAddTerminal, projectPath]);
+
+  // Handle terminal creation with selected provider
+  const handleCreateTerminalWithProvider = useCallback((providerType: ProviderType, profile: ProviderProfile) => {
+    const terminal = addTerminal(projectPath, projectPath);
+    if (terminal) {
+      // Set the provider for the new terminal
+      setTerminalProvider(terminal.id, providerType, profile.id);
+      console.log(`[TerminalGrid] Created terminal ${terminal.id} with provider ${providerType}`);
+    }
+  }, [addTerminal, projectPath, setTerminalProvider]);
 
   // Toggle terminal expand state
   const handleToggleExpand = useCallback((terminalId: string) => {
@@ -612,6 +631,13 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
           )}
         </DragOverlay>
       </div>
+
+      {/* New Terminal Dialog with Provider Selection */}
+      <NewTerminalDialog
+        isOpen={isNewTerminalDialogOpen}
+        onClose={() => setIsNewTerminalDialogOpen(false)}
+        onCreateTerminal={handleCreateTerminalWithProvider}
+      />
     </DndContext>
   );
 }

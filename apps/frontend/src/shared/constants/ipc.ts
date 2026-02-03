@@ -538,6 +538,19 @@ export const IPC_CHANNELS = {
   DEBUG_GET_RECENT_ERRORS: 'debug:getRecentErrors',
   DEBUG_LIST_LOG_FILES: 'debug:listLogFiles',
 
+  // Gemini CLI profile management
+  GEMINI_PROFILE_AUTHENTICATE: 'gemini:profileAuthenticate',  // Open terminal for OAuth login
+  GEMINI_PROFILE_VERIFY_AUTH: 'gemini:profileVerifyAuth',  // Check if authenticated
+  GEMINI_PROFILES_GET: 'gemini:profilesGet',
+  GEMINI_PROFILE_SAVE: 'gemini:profileSave',
+  GEMINI_PROFILE_DELETE: 'gemini:profileDelete',
+
+  // OpenAI CLI profile management
+  OPENAI_PROFILE_SAVE: 'openai:profileSave',
+  OPENAI_PROFILE_DELETE: 'openai:profileDelete',
+  OPENAI_PROFILES_GET: 'openai:profilesGet',
+  OPENAI_PROFILE_VERIFY_AUTH: 'openai:profileVerifyAuth',
+
   // Claude Code CLI operations
   CLAUDE_CODE_CHECK_VERSION: 'claudeCode:checkVersion',
   CLAUDE_CODE_INSTALL: 'claudeCode:install',

@@ -4,6 +4,7 @@ PR Review Tools
 
 Tool implementations for the orchestrating PR review agent.
 Provides subagent spawning, test execution, and verification tools.
+Supports multiple providers: Claude (default), Gemini, OpenAI.
 """
 
 from __future__ import annotations
@@ -15,16 +16,22 @@ from dataclasses import dataclass
 from pathlib import Path
 
 try:
+    from ...agents.task_config import get_task_provider
     from ...analysis.test_discovery import TestDiscovery
     from ...core.client import create_client
+    from ...core.providers import create_provider
+    from ...core.providers.types import ProviderType
     from ..context_gatherer import PRContext
     from ..models import PRReviewFinding, ReviewSeverity
     from .category_utils import map_category
 except (ImportError, ValueError, SystemError):
+    from agents.task_config import get_task_provider
     from analysis.test_discovery import TestDiscovery
     from category_utils import map_category
     from context_gatherer import PRContext
     from core.client import create_client
+    from core.providers import create_provider
+    from core.providers.types import ProviderType
     from models import PRReviewFinding, ReviewSeverity
 
 logger = logging.getLogger(__name__)
@@ -124,12 +131,25 @@ async def spawn_security_review(
             project_dir.parent.parent if project_dir.name == "backend" else project_dir
         )
 
-        client = create_client(
-            project_dir=project_root,
-            spec_dir=github_dir,
-            model=model,
-            agent_type="pr_reviewer",  # Read-only - no bash, no edits
-        )
+        # Determine provider type
+        provider_type = get_task_provider(github_dir, None)
+
+        # Create provider-specific client
+        if provider_type == ProviderType.CLAUDE:
+            client = create_client(
+                project_dir=project_root,
+                spec_dir=github_dir,
+                model=model,
+                agent_type="pr_reviewer",  # Read-only - no bash, no edits
+            )
+        else:
+            client = create_provider(
+                provider_type=provider_type,
+                project_dir=project_root,
+                spec_dir=github_dir,
+                model=model,
+                agent_type="pr_reviewer",
+            )
 
         # Run review session
         result_text = ""
@@ -210,12 +230,25 @@ async def spawn_quality_review(
             project_dir.parent.parent if project_dir.name == "backend" else project_dir
         )
 
-        client = create_client(
-            project_dir=project_root,
-            spec_dir=github_dir,
-            model=model,
-            agent_type="pr_reviewer",  # Read-only - no bash, no edits
-        )
+        # Determine provider type
+        provider_type = get_task_provider(github_dir, None)
+
+        # Create provider-specific client
+        if provider_type == ProviderType.CLAUDE:
+            client = create_client(
+                project_dir=project_root,
+                spec_dir=github_dir,
+                model=model,
+                agent_type="pr_reviewer",  # Read-only - no bash, no edits
+            )
+        else:
+            client = create_provider(
+                provider_type=provider_type,
+                project_dir=project_root,
+                spec_dir=github_dir,
+                model=model,
+                agent_type="pr_reviewer",
+            )
 
         result_text = ""
         async with client:
@@ -305,12 +338,25 @@ Output findings in JSON format:
             project_dir.parent.parent if project_dir.name == "backend" else project_dir
         )
 
-        client = create_client(
-            project_dir=project_root,
-            spec_dir=github_dir,
-            model=model,
-            agent_type="pr_reviewer",  # Read-only - no bash, no edits
-        )
+        # Determine provider type
+        provider_type = get_task_provider(github_dir, None)
+
+        # Create provider-specific client
+        if provider_type == ProviderType.CLAUDE:
+            client = create_client(
+                project_dir=project_root,
+                spec_dir=github_dir,
+                model=model,
+                agent_type="pr_reviewer",  # Read-only - no bash, no edits
+            )
+        else:
+            client = create_provider(
+                provider_type=provider_type,
+                project_dir=project_root,
+                spec_dir=github_dir,
+                model=model,
+                agent_type="pr_reviewer",
+            )
 
         result_text = ""
         async with client:

@@ -2,6 +2,7 @@
 Roadmap generation orchestrator.
 
 Coordinates all phases of the roadmap generation process.
+Supports multiple providers: Claude (default), Gemini, OpenAI.
 """
 
 import asyncio
@@ -9,6 +10,9 @@ import json
 from pathlib import Path
 
 from client import create_client
+from core.providers import get_provider_capabilities
+from core.providers.types import ProviderType
+from agents.task_config import get_task_provider
 from debug import debug, debug_error, debug_section, debug_success
 from init import init_auto_claude_dir
 from phase_config import get_thinking_budget
@@ -21,7 +25,10 @@ from .phases import DiscoveryPhase, FeaturesPhase, ProjectIndexPhase
 
 
 class RoadmapOrchestrator:
-    """Orchestrates the roadmap creation process."""
+    """Orchestrates the roadmap creation process.
+
+    Supports multiple providers: Claude (default), Gemini, OpenAI.
+    """
 
     def __init__(
         self,
@@ -32,6 +39,7 @@ class RoadmapOrchestrator:
         refresh: bool = False,
         enable_competitor_analysis: bool = False,
         refresh_competitor_analysis: bool = False,
+        provider: str | None = None,
     ):
         self.project_dir = Path(project_dir)
         self.model = model
@@ -40,6 +48,7 @@ class RoadmapOrchestrator:
         self.refresh = refresh
         self.enable_competitor_analysis = enable_competitor_analysis
         self.refresh_competitor_analysis = refresh_competitor_analysis
+        self.provider = provider
 
         # Default output to project's .auto-claude directory (installed instance)
         # Note: auto-claude/ is source code, .auto-claude/ is the installed instance
@@ -52,6 +61,14 @@ class RoadmapOrchestrator:
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
+        # Determine provider type and log if non-Claude
+        provider_type = get_task_provider(self.output_dir, provider)
+        if provider_type != ProviderType.CLAUDE:
+            provider_caps = get_provider_capabilities(provider_type)
+            print(f"\n📦 Using provider: {provider_type.value.upper()}")
+            if not provider_caps.get("supports_extended_thinking"):
+                print("   ⚠️  Extended thinking: not supported")
+
         # Initialize executors
         self.script_executor = ScriptExecutor(self.project_dir)
         self.agent_executor = AgentExecutor(
@@ -60,6 +77,7 @@ class RoadmapOrchestrator:
             self.model,
             create_client,
             self.thinking_budget,
+            provider=provider,
         )
 
         # Initialize phase handlers

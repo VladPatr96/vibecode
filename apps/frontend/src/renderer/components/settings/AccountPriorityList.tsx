@@ -88,9 +88,9 @@ const getStatusKey = (sessionPercent?: number, weeklyPercent?: number, isRateLim
 export interface UnifiedAccount {
   id: string;
   name: string;
-  type: 'oauth' | 'api';
+  type: 'oauth' | 'api' | 'gemini' | 'openai';
   displayName: string;
-  identifier: string; // email for OAuth, baseUrl for API
+  identifier: string; // email for OAuth, baseUrl for API, API key hint for Gemini/OpenAI
   isActive: boolean;  // TRUE only for the ONE account currently in use
   isNext: boolean;
   isAvailable: boolean;
@@ -161,10 +161,17 @@ function SortableAccountItem({ account, index }: SortableAccountItemProps) {
       {/* Account icon - visual distinction between OAuth and API */}
       <div className={cn(
         "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
-        account.type === 'oauth' ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"
+        account.type === 'oauth' ? "bg-primary/10 text-primary" :
+        account.type === 'gemini' ? "bg-blue-500/10 text-blue-500" :
+        account.type === 'openai' ? "bg-green-500/10 text-green-500" :
+        "bg-secondary text-secondary-foreground"
       )}>
         {account.type === 'oauth' ? (
           <Users className="h-4 w-4" />
+        ) : account.type === 'gemini' ? (
+          <span className="text-sm">🔵</span>
+        ) : account.type === 'openai' ? (
+          <span className="text-sm">🟢</span>
         ) : (
           <Server className="h-4 w-4" />
         )}
@@ -178,7 +185,10 @@ function SortableAccountItem({ account, index }: SortableAccountItemProps) {
           </span>
           {/* Account type indicator */}
           <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 bg-muted rounded">
-            {account.type === 'oauth' ? t('accounts.priority.typeOAuth') : t('accounts.priority.typeAPI')}
+            {account.type === 'oauth' ? t('accounts.priority.typeOAuth') :
+             account.type === 'gemini' ? 'Gemini' :
+             account.type === 'openai' ? 'OpenAI' :
+             t('accounts.priority.typeAPI')}
           </span>
           {/* Status badges - only ONE account should have "In Use" */}
           {account.isActive && (

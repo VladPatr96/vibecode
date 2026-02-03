@@ -1,7 +1,10 @@
 /**
  * Output Parser Module
  * Handles parsing and pattern detection in terminal output
+ * Supports Claude, Gemini, and OpenAI CLI providers
  */
+
+import type { ProviderType } from '../providers/types';
 
 /**
  * Regex patterns to capture Claude session ID from output
@@ -371,4 +374,193 @@ export function detectClaudeExit(data: string): boolean {
 
   // Check for Claude exit patterns (shell prompt return)
   return isClaudeExitOutput(data);
+}
+
+// =============================================================================
+// Multi-Provider Support
+// =============================================================================
+
+/**
+ * Gemini CLI rate limit patterns
+ */
+const GEMINI_RATE_LIMIT_PATTERNS = [
+  /429\s*Too Many Requests/i,
+  /quota.*exceeded/i,
+  /rate.*limit.*reached/i,
+  /Resource has been exhausted/i,
+  /RESOURCE_EXHAUSTED/i,
+];
+
+/**
+ * OpenAI CLI rate limit patterns
+ */
+const OPENAI_RATE_LIMIT_PATTERNS = [
+  /Rate limit reached/i,
+  /429.*rate.*limit/i,
+  /Too many requests/i,
+  /Request was throttled/i,
+  /tokens per minute/i,
+  /requests per minute/i,
+];
+
+/**
+ * Gemini busy/processing patterns
+ */
+const GEMINI_BUSY_PATTERNS = [
+  /Generating\.\.\./i,
+  /Thinking\.\.\./i,
+  /Processing\.\.\./i,
+  /●/,                              // Response indicator
+  /\u25cf/,                         // Unicode bullet point
+];
+
+/**
+ * OpenAI busy/processing patterns
+ */
+const OPENAI_BUSY_PATTERNS = [
+  /Generating\.\.\./i,
+  /Thinking\.\.\./i,
+  /Processing\.\.\./i,
+  /Running\.\.\./i,
+  /●/,                              // Response indicator
+  /\u25cf/,                         // Unicode bullet point
+];
+
+/**
+ * Gemini idle/ready patterns
+ */
+const GEMINI_IDLE_PATTERNS = [
+  /^>\s*$/m,                        // Simple prompt
+  /\n>\s*$/,                        // Prompt at end
+];
+
+/**
+ * OpenAI idle/ready patterns
+ */
+const OPENAI_IDLE_PATTERNS = [
+  /^>\s*$/m,                        // Simple prompt
+  /\n>\s*$/,                        // Prompt at end
+  /^codex>\s*$/m,                   // Codex prompt
+];
+
+/**
+ * Rate limit info structure
+ */
+export interface ProviderRateLimitInfo {
+  provider: 'claude' | 'gemini' | 'openai';
+  resetTime?: string;
+  message?: string;
+}
+
+/**
+ * Check for rate limit message from any provider
+ */
+export function detectProviderRateLimit(
+  data: string,
+  providerType?: 'claude' | 'gemini' | 'openai'
+): ProviderRateLimitInfo | null {
+  // Claude rate limit
+  if (!providerType || providerType === 'claude') {
+    if (hasRateLimitMessage(data)) {
+      const resetTime = extractRateLimitReset(data);
+      return {
+        provider: 'claude',
+        resetTime: resetTime || undefined,
+        message: 'Claude rate limit reached',
+      };
+    }
+  }
+
+  // Gemini rate limit
+  if (!providerType || providerType === 'gemini') {
+    for (const pattern of GEMINI_RATE_LIMIT_PATTERNS) {
+      if (pattern.test(data)) {
+        return {
+          provider: 'gemini',
+          message: 'Gemini quota exceeded',
+        };
+      }
+    }
+  }
+
+  // OpenAI rate limit
+  if (!providerType || providerType === 'openai') {
+    for (const pattern of OPENAI_RATE_LIMIT_PATTERNS) {
+      if (pattern.test(data)) {
+        return {
+          provider: 'openai',
+          message: 'OpenAI rate limit reached',
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Detect busy state for any provider
+ */
+export function detectProviderBusyState(
+  data: string,
+  providerType: 'claude' | 'gemini' | 'openai' = 'claude'
+): 'busy' | 'idle' | null {
+  if (providerType === 'claude') {
+    return detectClaudeBusyState(data);
+  }
+
+  if (providerType === 'gemini') {
+    if (GEMINI_BUSY_PATTERNS.some(p => p.test(data))) {
+      return 'busy';
+    }
+    if (GEMINI_IDLE_PATTERNS.some(p => p.test(data))) {
+      return 'idle';
+    }
+    return null;
+  }
+
+  if (providerType === 'openai') {
+    if (OPENAI_BUSY_PATTERNS.some(p => p.test(data))) {
+      return 'busy';
+    }
+    if (OPENAI_IDLE_PATTERNS.some(p => p.test(data))) {
+      return 'idle';
+    }
+    return null;
+  }
+
+  return null;
+}
+
+/**
+ * Check if provider CLI has exited
+ */
+export function detectProviderExit(
+  data: string,
+  providerType: 'claude' | 'gemini' | 'openai' = 'claude'
+): boolean {
+  // All providers use similar shell return detection
+  if (detectProviderBusyState(data, providerType) === 'busy') {
+    return false;
+  }
+
+  return isClaudeExitOutput(data);
+}
+
+/**
+ * Extract API key validation errors
+ */
+export function detectApiKeyError(
+  data: string,
+  providerType: 'gemini' | 'openai'
+): boolean {
+  if (providerType === 'gemini') {
+    return /API key not valid|Invalid API key|INVALID_ARGUMENT.*key/i.test(data);
+  }
+
+  if (providerType === 'openai') {
+    return /Invalid API key|Incorrect API key|API key.*invalid/i.test(data);
+  }
+
+  return false;
 }

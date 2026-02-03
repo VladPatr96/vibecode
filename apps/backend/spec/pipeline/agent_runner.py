@@ -3,6 +3,7 @@ Agent Runner
 ============
 
 Handles the execution of AI agents for the spec creation pipeline.
+Supports multiple providers: Claude (default), Gemini, OpenAI.
 """
 
 from pathlib import Path
@@ -34,6 +35,7 @@ class AgentRunner:
         spec_dir: Path,
         model: str,
         task_logger: TaskLogger | None = None,
+        provider: str | None = None,
     ):
         """Initialize the agent runner.
 
@@ -42,11 +44,13 @@ class AgentRunner:
             spec_dir: The spec directory
             model: The model to use for agent execution
             task_logger: Optional task logger for tracking progress
+            provider: Provider type ('claude', 'gemini', 'openai') - defaults to 'claude'
         """
         self.project_dir = project_dir
         self.spec_dir = spec_dir
         self.model = model
         self.task_logger = task_logger
+        self.provider = provider
 
     async def run_agent(
         self,
@@ -62,7 +66,7 @@ class AgentRunner:
             prompt_file: The prompt file to use (relative to prompts directory)
             additional_context: Additional context to add to the prompt
             interactive: Whether to run in interactive mode
-            thinking_budget: Token budget for extended thinking (None = disabled)
+            thinking_budget: Token budget for extended thinking (None = disabled, Claude only)
             prior_phase_summaries: Summaries from previous phases for context
 
         Returns:
@@ -75,6 +79,7 @@ class AgentRunner:
             prompt_file=prompt_file,
             spec_dir=str(self.spec_dir),
             model=self.model,
+            provider=self.provider or "claude",
             interactive=interactive,
         )
 
@@ -113,21 +118,42 @@ class AgentRunner:
                 context_length=len(additional_context),
             )
 
-        # Create client with thinking budget
+        # Determine provider type
+        from agents.task_config import get_task_provider
+        from core.providers.types import ProviderType
+
+        provider_type = get_task_provider(self.spec_dir, self.provider)
+
+        # Create client with thinking budget (Claude only)
+        effective_thinking = thinking_budget if provider_type == ProviderType.CLAUDE else None
         debug(
             "agent_runner",
-            "Creating Claude SDK client...",
-            thinking_budget=thinking_budget,
+            "Creating SDK client...",
+            provider=provider_type.value,
+            thinking_budget=effective_thinking,
         )
-        # Lazy import to avoid circular import with core.client
-        from core.client import create_client
 
-        client = create_client(
-            self.project_dir,
-            self.spec_dir,
-            self.model,
-            max_thinking_tokens=thinking_budget,
-        )
+        # Create provider-specific client
+        if provider_type == ProviderType.CLAUDE:
+            # Lazy import to avoid circular import with core.client
+            from core.client import create_client
+
+            client = create_client(
+                self.project_dir,
+                self.spec_dir,
+                self.model,
+                max_thinking_tokens=effective_thinking,
+            )
+        else:
+            from core.providers import create_provider
+
+            client = create_provider(
+                provider_type=provider_type,
+                project_dir=self.project_dir,
+                spec_dir=self.spec_dir,
+                model=self.model,
+                agent_type="spec_creator",
+            )
 
         current_tool = None
         message_count = 0
