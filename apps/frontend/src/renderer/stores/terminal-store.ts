@@ -78,6 +78,9 @@ export function writeToTerminal(terminalId: string, data: string): void {
 
 export type TerminalStatus = 'idle' | 'running' | 'claude-active' | 'exited';
 
+// Provider type for multi-CLI support
+export type TerminalProviderType = 'claude' | 'gemini' | 'openai';
+
 export interface Terminal {
   id: string;
   title: string;
@@ -95,6 +98,9 @@ export interface Terminal {
   pendingClaudeResume?: boolean;  // Whether this terminal has a pending Claude resume (deferred until tab activated)
   displayOrder?: number;  // Display order for tab persistence (lower = further left)
   claudeNamedOnce?: boolean;  // Whether this Claude terminal has been auto-named based on initial message (prevents repeated naming)
+  // Multi-provider support
+  providerType?: TerminalProviderType;  // CLI provider type (claude, gemini, openai)
+  providerProfileId?: string;  // Provider profile ID for credentials
 }
 
 interface TerminalLayout {
@@ -128,6 +134,9 @@ interface TerminalState {
   setClaudeBusy: (id: string, isBusy: boolean) => void;
   setPendingClaudeResume: (id: string, pending: boolean) => void;
   setClaudeNamedOnce: (id: string, named: boolean) => void;
+  // Multi-provider support
+  setTerminalProvider: (id: string, providerType: TerminalProviderType, profileId?: string) => void;
+  getTerminalProvider: (id: string) => { providerType: TerminalProviderType; profileId?: string } | null;
   clearAllTerminals: () => void;
   setHasRestoredSessions: (value: boolean) => void;
   reorderTerminals: (activeId: string, overId: string) => void;
@@ -400,6 +409,27 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
         t.id === id ? { ...t, claudeNamedOnce: named } : t
       ),
     }));
+  },
+
+  // Multi-provider support
+  setTerminalProvider: (id: string, providerType: TerminalProviderType, profileId?: string) => {
+    set((state) => ({
+      terminals: state.terminals.map((t) =>
+        t.id === id ? { ...t, providerType, providerProfileId: profileId } : t
+      ),
+    }));
+    debugLog(`[TerminalStore] Set terminal ${id} provider to ${providerType}`);
+  },
+
+  getTerminalProvider: (id: string) => {
+    const terminal = get().terminals.find((t) => t.id === id);
+    if (!terminal || !terminal.providerType) {
+      return null;
+    }
+    return {
+      providerType: terminal.providerType,
+      profileId: terminal.providerProfileId,
+    };
   },
 
   clearAllTerminals: () => {
