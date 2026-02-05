@@ -219,6 +219,13 @@ Examples:
         action="store_true",
         help="Build directly in project without worktree isolation (default: use isolated worktree)",
     )
+    parser.add_argument(
+        "--provider",
+        type=str,
+        choices=["claude", "gemini", "openai", "opencode"],
+        default="claude",
+        help="AI provider to use (claude, gemini, openai, opencode). Default: claude",
+    )
 
     args = parser.parse_args()
 
@@ -298,6 +305,7 @@ Examples:
         thinking_level=args.thinking_level,
         complexity_override=args.complexity,
         use_ai_assessment=not args.no_ai_assessment,
+        provider=args.provider,
     )
 
     try:
