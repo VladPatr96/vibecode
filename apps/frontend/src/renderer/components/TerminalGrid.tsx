@@ -40,6 +40,11 @@ import { useTaskStore } from '../stores/task-store';
 import { useFileExplorerStore } from '../stores/file-explorer-store';
 import { TERMINAL_DOM_UPDATE_DELAY_MS } from '../../shared/constants';
 import type { SessionDateInfo } from '../../shared/types';
+import { PROVIDER_COLORS } from '../../shared/constants/provider-colors';
+
+// Safelist for dynamic classes constructed with opacity modifiers
+// bg-orange-500/5 bg-blue-500/5 bg-green-500/5 bg-purple-500/5
+// border-orange-500 border-blue-500 border-green-500 border-purple-500
 
 interface TerminalGridProps {
   projectPath?: string;
@@ -258,18 +263,26 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
 
   // Open new terminal dialog for provider selection
   const handleAddTerminal = useCallback(() => {
+    console.log('[TerminalGrid] handleAddTerminal called', { projectPath, canAdd: canAddTerminal(projectPath) });
     if (canAddTerminal(projectPath)) {
+      console.log('[TerminalGrid] Opening NewTerminalDialog');
       setIsNewTerminalDialogOpen(true);
+    } else {
+      console.warn('[TerminalGrid] Cannot add terminal - max reached or no project path');
     }
   }, [canAddTerminal, projectPath]);
 
   // Handle terminal creation with selected provider
   const handleCreateTerminalWithProvider = useCallback((providerType: ProviderType, profile: ProviderProfile) => {
+    console.log(`[TerminalGrid] handleCreateTerminalWithProvider called`, { providerType, profile, projectPath });
     const terminal = addTerminal(projectPath, projectPath);
+    console.log(`[TerminalGrid] addTerminal result:`, terminal);
     if (terminal) {
       // Set the provider for the new terminal
       setTerminalProvider(terminal.id, providerType, profile.id);
       console.log(`[TerminalGrid] Created terminal ${terminal.id} with provider ${providerType}`);
+    } else {
+      console.warn(`[TerminalGrid] Failed to create terminal`);
     }
   }, [addTerminal, projectPath, setTerminalProvider]);
 
@@ -407,24 +420,32 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
   // Empty state
   if (terminals.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-6 p-8">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="rounded-full bg-card p-4">
-            <Grid2X2 className="h-8 w-8 text-muted-foreground" />
+      <>
+        <div className="flex h-full flex-col items-center justify-center gap-6 p-8">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <div className="rounded-full bg-card p-4">
+              <Grid2X2 className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Agent Terminals</h2>
+              <p className="mt-1 text-sm text-muted-foreground max-w-md">
+                Spawn multiple terminals to run Claude agents in parallel.
+                Use <kbd className="px-1.5 py-0.5 text-xs bg-card border border-border rounded">Ctrl+T</kbd> to create a new terminal.
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Agent Terminals</h2>
-            <p className="mt-1 text-sm text-muted-foreground max-w-md">
-              Spawn multiple terminals to run Claude agents in parallel.
-              Use <kbd className="px-1.5 py-0.5 text-xs bg-card border border-border rounded">Ctrl+T</kbd> to create a new terminal.
-            </p>
-          </div>
+          <Button onClick={handleAddTerminal} className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Terminal
+          </Button>
         </div>
-        <Button onClick={handleAddTerminal} className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Terminal
-        </Button>
-      </div>
+        {/* New Terminal Dialog with Provider Selection */}
+        <NewTerminalDialog
+          isOpen={isNewTerminalDialogOpen}
+          onClose={() => setIsNewTerminalDialogOpen(false)}
+          onCreateTerminal={handleCreateTerminalWithProvider}
+        />
+      </>
     );
   }
 
@@ -545,8 +566,9 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
               (() => {
                 const expandedTerminal = terminals.find(t => t.id === expandedTerminalId);
                 if (!expandedTerminal) return null;
+                const providerColors = PROVIDER_COLORS[expandedTerminal.providerType || 'claude'];
                 return (
-                  <div className="h-full p-1">
+                  <div className={cn("h-full p-1 border-2 rounded-lg transition-colors", providerColors.border, `${providerColors.bg}/5`)}>
                     <SortableTerminalWrapper
                       id={expandedTerminal.id}
                       cwd={expandedTerminal.cwd || projectPath}
@@ -571,30 +593,33 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
                     <React.Fragment key={rowIndex}>
                       <Panel id={`row-${rowIndex}`} defaultSize={100 / terminalRows.length} minSize={15}>
                         <Group orientation="horizontal" className="h-full">
-                          {row.map((terminal, colIndex) => (
-                            <React.Fragment key={terminal.id}>
-                              <Panel id={terminal.id} defaultSize={100 / row.length} minSize={10}>
-                                <div className="h-full p-1">
-                                  <SortableTerminalWrapper
-                                    id={terminal.id}
-                                    cwd={terminal.cwd || projectPath}
-                                    projectPath={projectPath}
-                                    isActive={terminal.id === activeTerminalId}
-                                    onClose={() => handleCloseTerminal(terminal.id)}
-                                    onActivate={() => setActiveTerminal(terminal.id)}
-                                    tasks={tasks}
-                                    onNewTaskClick={onNewTaskClick}
-                                    terminalCount={terminals.length}
-                                    isExpanded={false}
-                                    onToggleExpand={() => handleToggleExpand(terminal.id)}
-                                  />
-                                </div>
-                              </Panel>
-                              {colIndex < row.length - 1 && (
-                                <Separator className="w-1 hover:bg-primary/30 transition-colors" />
-                              )}
-                            </React.Fragment>
-                          ))}
+                          {row.map((terminal, colIndex) => {
+                            const providerColors = PROVIDER_COLORS[terminal.providerType || 'claude'];
+                            return (
+                              <React.Fragment key={terminal.id}>
+                                <Panel id={terminal.id} defaultSize={100 / row.length} minSize={10}>
+                                  <div className={cn("h-full p-1 border-2 rounded-lg transition-colors", providerColors.border, `${providerColors.bg}/5`)}>
+                                    <SortableTerminalWrapper
+                                      id={terminal.id}
+                                      cwd={terminal.cwd || projectPath}
+                                      projectPath={projectPath}
+                                      isActive={terminal.id === activeTerminalId}
+                                      onClose={() => handleCloseTerminal(terminal.id)}
+                                      onActivate={() => setActiveTerminal(terminal.id)}
+                                      tasks={tasks}
+                                      onNewTaskClick={onNewTaskClick}
+                                      terminalCount={terminals.length}
+                                      isExpanded={false}
+                                      onToggleExpand={() => handleToggleExpand(terminal.id)}
+                                    />
+                                  </div>
+                                </Panel>
+                                {colIndex < row.length - 1 && (
+                                  <Separator className="w-1 hover:bg-primary/30 transition-colors" />
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
                         </Group>
                       </Panel>
                       {rowIndex < terminalRows.length - 1 && (
