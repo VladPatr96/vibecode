@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { ProviderSelector } from '../providers/ProviderSelector';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { ProviderType, ProviderProfile } from '../providers/ProviderSelector';
 import { cn } from '@/lib/utils';
 
@@ -11,12 +11,21 @@ const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   claude: 'Claude Code',
   gemini: 'Gemini CLI',
   openai: 'OpenAI Codex',
+  opencode: 'OpenCode',
+};
+
+const PROVIDER_ICONS: Record<ProviderType, string> = {
+  claude: '🟠',
+  gemini: '🔵',
+  openai: '🟢',
+  opencode: '🟣',
 };
 
 const DEFAULT_MODELS: Record<ProviderType, string> = {
   claude: 'claude-sonnet-4-20250514',
   gemini: 'gemini-2.0-flash',
   openai: 'gpt-4o',
+  opencode: 'opencode-v1',
 };
 
 interface NewTerminalDialogProps {
@@ -35,8 +44,6 @@ export const NewTerminalDialog: React.FC<NewTerminalDialogProps> = ({
   const [selectedProvider, setSelectedProvider] = useState<ProviderType>('claude');
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [newProfileName, setNewProfileName] = useState<string>('');
-
-  const availableProviders: ProviderType[] = ['claude', 'gemini', 'openai'];
 
   const filteredProfiles = existingProfiles.filter(
     (p) => p.providerType === selectedProvider
@@ -101,15 +108,71 @@ export const NewTerminalDialog: React.FC<NewTerminalDialogProps> = ({
       >
         <h2 className="text-lg font-semibold mb-4">New Terminal</h2>
 
-        <ProviderSelector
-          availableProviders={availableProviders}
-          selectedProvider={selectedProvider}
-          profiles={existingProfiles}
-          selectedProfileId={selectedProfileId}
-          onProviderChange={setSelectedProvider}
-          onProfileChange={setSelectedProfileId}
-          className="mb-4"
-        />
+        <div className="mb-6">
+          <label className="text-sm text-muted-foreground mb-2 block">Provider</label>
+          <Tabs
+            value={selectedProvider}
+            onValueChange={(v) => setSelectedProvider(v as ProviderType)}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-secondary/50">
+              <TabsTrigger
+                value="claude"
+                className="flex flex-col gap-1 py-2 data-[state=active]:bg-orange-500 data-[state=active]:text-white transition-all"
+              >
+                <span className="text-lg">{PROVIDER_ICONS.claude}</span>
+                <span className="text-xs">Claude</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="gemini"
+                className="flex flex-col gap-1 py-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all"
+              >
+                <span className="text-lg">{PROVIDER_ICONS.gemini}</span>
+                <span className="text-xs">Gemini</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="openai"
+                className="flex flex-col gap-1 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white transition-all"
+              >
+                <span className="text-lg">{PROVIDER_ICONS.openai}</span>
+                <span className="text-xs">OpenAI</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="opencode"
+                className="flex flex-col gap-1 py-2 data-[state=active]:bg-purple-500 data-[state=active]:text-white transition-all"
+              >
+                <span className="text-lg">{PROVIDER_ICONS.opencode}</span>
+                <span className="text-xs">Opencode</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        {filteredProfiles.length > 0 && (
+          <div className="mb-4">
+            <label
+              htmlFor="profile-select"
+              className="block text-sm text-muted-foreground mb-2"
+            >
+              Profile:
+            </label>
+            <select
+              id="profile-select"
+              value={selectedProfileId}
+              onChange={(e) => setSelectedProfileId(e.target.value)}
+              className={cn(
+                'w-full px-3 py-2 rounded-md border border-border bg-background text-sm',
+                'focus:outline-none focus:ring-2 focus:ring-primary/50'
+              )}
+            >
+              {filteredProfiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.name} ({profile.model})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {filteredProfiles.length === 0 && (
           <div className="new-profile-section mb-4">
