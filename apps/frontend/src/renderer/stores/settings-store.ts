@@ -1,7 +1,16 @@
 import { create } from 'zustand';
 import type { AppSettings } from '../../shared/types';
 import type { APIProfile, ProfileFormData, TestConnectionResult, DiscoverModelsResult, ModelInfo } from '@shared/types/profile';
+import type {
+  GlobalProviderSettings,
+  ProjectProviderSettings,
+  TaskProviderSettings,
+  ProviderType,
+  PhaseProviderConfig
+} from '../../shared/types/provider-config';
 import { DEFAULT_APP_SETTINGS } from '../../shared/constants';
+
+export type Phase = keyof PhaseProviderConfig;
 import { toast } from '../hooks/use-toast';
 import { markSettingsLoaded } from '../lib/sentry';
 
@@ -9,6 +18,9 @@ interface SettingsState {
   settings: AppSettings;
   isLoading: boolean;
   error: string | null;
+
+  // Global Provider Settings
+  globalProviderSettings: GlobalProviderSettings;
 
   // API Profile state
   profiles: APIProfile[];
@@ -31,6 +43,10 @@ interface SettingsState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 
+  // Global Provider Actions
+  setGlobalProviderSettings: (settings: GlobalProviderSettings) => void;
+  getPhaseProvider: (phase: Phase, projectSettings?: ProjectProviderSettings, taskSettings?: TaskProviderSettings) => ProviderType;
+
   // Profile actions
   setProfiles: (profiles: APIProfile[], activeProfileId: string | null) => void;
   setProfilesLoading: (loading: boolean) => void;
@@ -43,10 +59,13 @@ interface SettingsState {
   discoverModels: (baseUrl: string, apiKey: string, signal?: AbortSignal) => Promise<ModelInfo[] | null>;
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
+export const useSettingsStore = create<SettingsState>((set, get) => ({
   settings: DEFAULT_APP_SETTINGS as AppSettings,
   isLoading: true,  // Start as true since we load settings on app init
   error: null,
+
+  // Global Provider Settings Default
+  globalProviderSettings: { defaultProvider: 'claude' },
 
   // API Profile state
   profiles: [],
@@ -73,6 +92,32 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   setError: (error) => set({ error }),
+
+  // Global Provider Actions Implementation
+  setGlobalProviderSettings: (globalProviderSettings) => set({ globalProviderSettings }),
+
+  getPhaseProvider: (phase, projectSettings, taskSettings) => {
+    const { globalProviderSettings } = get();
+
+    // 1. Task phase setting
+    if (taskSettings?.phaseProviders?.[phase]) {
+      return taskSettings.phaseProviders[phase]!;
+    }
+
+    // 2. Project phase setting
+    // Note: ProjectProviderSettings currently uses defaultProvider as the setting
+    if (projectSettings?.defaultProvider) {
+      return projectSettings.defaultProvider;
+    }
+
+    // 3. Global phase setting & 4. Global default provider
+    if (globalProviderSettings?.defaultProvider) {
+      return globalProviderSettings.defaultProvider;
+    }
+
+    // 5. Hard fallback
+    return 'claude';
+  },
 
   // Profile actions
   setProfiles: (profiles, activeProfileId) => set({ profiles, activeProfileId }),
