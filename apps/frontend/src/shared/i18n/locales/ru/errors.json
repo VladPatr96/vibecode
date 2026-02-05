@@ -1,0 +1,28 @@
+{
+  "task": {
+    "parseImplementationPlan": "Не удалось разобрать implementation_plan.json для {{specId}}: {{error}}",
+    "jsonError": {
+      "titleSuffix": "(Ошибка JSON)",
+      "description": "⚠️ Ошибка разбора JSON: {{error}}\n\nФайл implementation_plan.json повреждён. Запустите автоисправление бэкенда или исправьте файл вручную."
+    }
+  },
+  "provider": {
+    "authFailed": "Ошибка аутентификации",
+    "tokenExpired": "Срок действия токена истек",
+    "rateLimited": "Превышен лимит запросов",
+    "unavailable": "Сервис недоступен",
+    "descriptions": {
+      "authFailed": "Не удалось аутентифицироваться в {{provider}}. Пожалуйста, проверьте ваши учетные данные.",
+      "tokenExpired": "Ваша сессия с {{provider}} истекла. Пожалуйста, пройдите аутентификацию заново.",
+      "rateLimited": "Вы превысили лимит запросов для {{provider}}. Пожалуйста, подождите или переключитесь на другого провайдера.",
+      "unavailable": "Сервис {{provider}} в данный момент недоступен. Пожалуйста, попробуйте позже или переключитесь на другого провайдера.",
+      "generic": "Произошла ошибка с {{provider}}: {{message}}"
+    },
+    "actions": {
+      "retry": "Повторить",
+      "reauthenticate": "Войти заново",
+      "switchProvider": "Сменить провайдера",
+      "cancel": "Отмена"
+    }
+  }
+}
