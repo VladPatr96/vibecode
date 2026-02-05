@@ -16,27 +16,76 @@ import type {
   RateLimitInfo,
 } from '../types';
 import { ProviderType as PT } from '../types';
+import { createOpenAIOAuthManager } from '../oauth/openai-oauth';
 
 class OpenAIAuthHandler implements IAuthHandler {
+  private oauthManager = createOpenAIOAuthManager();
+
   async authenticate(_configDir?: string): Promise<ProviderCredentials> {
+    // Prioritize environment variable if present
     const apiKey = process.env.OPENAI_API_KEY;
+    if (apiKey) {
+      return {
+        providerType: PT.OPENAI,
+        apiKey,
+      };
+    }
+
+    // Fallback to OAuth flow
+    const tokens = await this.oauthManager.startAuthFlow();
     return {
       providerType: PT.OPENAI,
-      apiKey,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresAt: tokens.expiresAt,
+      metadata: {
+        scopes: tokens.scope?.split(' '),
+      },
     };
   }
 
   async refreshCredentials(
     credentials: ProviderCredentials
   ): Promise<ProviderCredentials> {
+    if (credentials.apiKey) {
+      return credentials;
+    }
+
+    if (credentials.refreshToken) {
+      try {
+        const newTokens = await this.oauthManager.refreshTokens(credentials.refreshToken);
+        return {
+          ...credentials,
+          accessToken: newTokens.accessToken,
+          refreshToken: newTokens.refreshToken || credentials.refreshToken,
+          expiresAt: newTokens.expiresAt,
+        };
+      } catch (error) {
+        console.error('Failed to refresh OpenAI tokens:', error);
+        return credentials;
+      }
+    }
+
     return credentials;
   }
 
   async validateCredentials(credentials: ProviderCredentials): Promise<boolean> {
-    return !!credentials.apiKey;
+    if (credentials.apiKey) {
+      return true;
+    }
+
+    if (credentials.accessToken && credentials.expiresAt) {
+      // Check if token is expired (with 5 minute buffer)
+      return Date.now() < (credentials.expiresAt - 5 * 60 * 1000);
+    }
+
+    return false;
   }
 
-  async revokeCredentials(_credentials: ProviderCredentials): Promise<void> {}
+  async revokeCredentials(_credentials: ProviderCredentials): Promise<void> {
+    // OpenAI doesn't have a standard revocation endpoint for OAuth tokens
+    // created via this flow that we need to call from the client
+  }
 }
 
 class OpenAICredentialManager implements ICredentialManager {
@@ -80,7 +129,7 @@ export class OpenAICLIProvider implements ICLIProvider {
   readonly providerType: ProviderType = PT.OPENAI;
 
   readonly capabilities: ProviderCapabilities = {
-    supportsOAuth: false,
+    supportsOAuth: true,
     supportsApiKey: true,
     supportsSessionResume: false,
     supportsProfileSwitch: true,
@@ -99,7 +148,15 @@ export class OpenAICLIProvider implements ICLIProvider {
 
   async initialize(profile: ProviderProfile): Promise<void> {
     this.currentProfile = profile;
-    this.credentials = await this.authHandler.authenticate();
+
+    // Try to retrieve stored credentials first
+    this.credentials = await this.credentialManager.retrieve(profile.id);
+
+    // If no credentials or expired/invalid, start auth flow
+    if (!this.credentials || !(await this.authHandler.validateCredentials(this.credentials))) {
+      this.credentials = await this.authHandler.authenticate();
+      await this.credentialManager.store(profile.id, this.credentials);
+    }
   }
 
   async dispose(): Promise<void> {
@@ -117,9 +174,13 @@ export class OpenAICLIProvider implements ICLIProvider {
 
   getCliEnvironment(): Record<string, string> {
     const env: Record<string, string> = {};
+
     if (this.credentials?.apiKey) {
       env.OPENAI_API_KEY = this.credentials.apiKey;
+    } else if (this.credentials?.accessToken) {
+      env.OPENAI_ACCESS_TOKEN = this.credentials.accessToken;
     }
+
     return env;
   }
 
@@ -142,7 +203,7 @@ export class OpenAICLIProvider implements ICLIProvider {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    return !!this.credentials?.apiKey;
+    return !!(this.credentials?.apiKey || this.credentials?.accessToken);
   }
 
   getAuthHandler(): IAuthHandler {
