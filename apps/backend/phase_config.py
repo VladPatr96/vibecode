@@ -77,14 +77,23 @@ class PhaseThinkingConfig(TypedDict, total=False):
     qa: str
 
 
+class PhaseProviderConfig(TypedDict, total=False):
+    spec: str
+    planning: str
+    coding: str
+    qa: str
+
+
 class TaskMetadataConfig(TypedDict, total=False):
     """Structure of model-related fields in task_metadata.json"""
 
     isAutoProfile: bool
     phaseModels: PhaseModelConfig
     phaseThinking: PhaseThinkingConfig
+    phaseProviders: PhaseProviderConfig
     model: str
     thinkingLevel: str
+    provider: str
 
 
 Phase = Literal["spec", "planning", "coding", "qa"]
@@ -255,6 +264,49 @@ def get_phase_thinking(
 
     # Fall back to default phase configuration
     return DEFAULT_PHASE_THINKING[phase]
+
+
+def get_phase_provider(
+    spec_dir: Path,
+    phase: Phase,
+    cli_provider: str | None = None,
+) -> str:
+    """
+    Get the provider for a specific execution phase.
+
+    Priority:
+    1. CLI argument (if provided)
+    2. Phase-specific config from task_metadata.json (if auto profile)
+    3. Single provider from task_metadata.json (if not auto profile)
+    4. Default provider ("claude")
+
+    Args:
+        spec_dir: Path to the spec directory
+        phase: Execution phase (spec, planning, coding, qa)
+        cli_provider: Provider from CLI argument (optional)
+
+    Returns:
+        Provider string (claude, gemini, openai)
+    """
+    # CLI argument takes precedence
+    if cli_provider:
+        return cli_provider
+
+    # Load task metadata
+    metadata = load_task_metadata(spec_dir)
+
+    if metadata:
+        # Check for auto profile with phase-specific config
+        if metadata.get("isAutoProfile") and metadata.get("phaseProviders"):
+            phase_providers = metadata["phaseProviders"]
+            return phase_providers.get(phase, "claude")
+
+        # Non-auto profile: use single provider
+        if metadata.get("provider"):
+            return metadata["provider"]
+
+    # Fall back to default
+    return "claude"
 
 
 def get_phase_thinking_budget(
