@@ -3,6 +3,7 @@ MR Review Engine
 ================
 
 Core logic for AI-powered MR code review.
+Supports multiple providers: Claude (default), Gemini, OpenAI.
 """
 
 from __future__ import annotations
@@ -15,6 +16,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 try:
+    from ...agents.task_config import get_task_provider
+    from ...core.providers import create_provider
+    from ...core.providers.types import ProviderType
     from ..models import (
         GitLabRunnerConfig,
         MergeVerdict,
@@ -25,6 +29,9 @@ try:
     )
 except ImportError:
     # Fallback for direct script execution (not as a module)
+    from agents.task_config import get_task_provider
+    from core.providers import create_provider
+    from core.providers.types import ProviderType
     from models import (
         GitLabRunnerConfig,
         MergeVerdict,
@@ -228,13 +235,25 @@ Provide your review in the following JSON format:
         if self.project_dir.name == "backend":
             project_root = self.project_dir.parent.parent
 
-        # Create the client
-        client = create_client(
-            project_dir=project_root,
-            spec_dir=self.gitlab_dir,
-            model=self.config.model,
-            agent_type="pr_reviewer",  # Read-only - no bash, no edits
-        )
+        # Determine provider type
+        provider_type = get_task_provider(self.gitlab_dir, getattr(self.config, 'provider', None))
+
+        # Create provider-specific client
+        if provider_type == ProviderType.CLAUDE:
+            client = create_client(
+                project_dir=project_root,
+                spec_dir=self.gitlab_dir,
+                model=self.config.model,
+                agent_type="pr_reviewer",  # Read-only - no bash, no edits
+            )
+        else:
+            client = create_provider(
+                provider_type=provider_type,
+                project_dir=project_root,
+                spec_dir=self.gitlab_dir,
+                model=self.config.model,
+                agent_type="mr_reviewer",
+            )
 
         result_text = ""
         try:

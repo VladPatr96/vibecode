@@ -867,5 +867,15 @@
       "label": "PR Template Filler",
       "description": "AI-fills GitHub PR templates from code changes"
     }
+  },
+  "providers": {
+    "title": "Global Provider Settings",
+    "description": "Configure the AI provider for each phase of the autonomous workflow.",
+    "phases": {
+      "spec": "Spec Creation",
+      "planning": "Planning",
+      "coding": "Coding",
+      "qa": "Quality Assurance"
+    }
   }
 }

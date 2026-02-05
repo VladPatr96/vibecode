@@ -1,6 +1,9 @@
 """Tests for multi-provider support."""
 
 import pytest
+from pathlib import Path
+from unittest.mock import patch, MagicMock
+
 from core.providers import (
     ProviderType,
     ProviderProfile,
@@ -8,6 +11,9 @@ from core.providers import (
     ClaudeCLIProvider,
     GeminiCLIProvider,
     OpenAICLIProvider,
+    RateLimitInfo,
+    create_provider,
+    get_provider_capabilities,
 )
 
 
@@ -126,3 +132,55 @@ class TestOpenAIProvider:
 
         cmd = provider.get_cli_command()
         assert "codex" in cmd
+
+
+class TestProviderFactory:
+    """Test provider factory function."""
+
+    def test_get_provider_capabilities_claude(self):
+        caps = get_provider_capabilities("claude")
+        assert caps["supports_extended_thinking"] is True
+        assert caps["supports_mcp"] is True
+        assert caps["supports_streaming"] is True
+        assert caps["supports_tool_use"] is True
+        assert caps["supports_session_resume"] is True
+
+    def test_get_provider_capabilities_gemini(self):
+        caps = get_provider_capabilities(ProviderType.GEMINI)
+        assert caps["supports_extended_thinking"] is False
+        assert caps["supports_mcp"] is False
+        assert caps["supports_streaming"] is True
+
+    def test_get_provider_capabilities_openai(self):
+        caps = get_provider_capabilities("openai")
+        assert caps["supports_extended_thinking"] is False
+        assert caps["supports_mcp"] is False
+        assert caps["supports_vision"] is True
+
+    def test_get_provider_capabilities_unknown(self):
+        caps = get_provider_capabilities("unknown_provider")
+        assert caps == {}
+
+    def test_create_provider_invalid_type(self):
+        with pytest.raises(ValueError, match="Unknown provider type"):
+            create_provider(
+                provider_type="invalid",
+                project_dir=Path("/tmp"),
+                spec_dir=Path("/tmp"),
+                model="test",
+            )
+
+
+class TestRateLimitInfo:
+    """Test rate limit info."""
+
+    def test_rate_limit_info_creation(self):
+        info = RateLimitInfo(
+            requests_remaining=100,
+            tokens_remaining=50000,
+            reset_at=1234567890,
+            retry_after=60,
+        )
+        assert info.requests_remaining == 100
+        assert info.tokens_remaining == 50000
+        assert info.retry_after == 60

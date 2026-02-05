@@ -26,6 +26,7 @@ import { useProjectStore } from '../stores/project-store';
 import { cn } from '../lib/utils';
 import type { TaskCategory, TaskPriority, TaskComplexity, TaskImpact, TaskMetadata, ImageAttachment, TaskDraft, ModelType, ThinkingLevel, ReferencedFile } from '../../shared/types';
 import type { PhaseModelConfig, PhaseThinkingConfig } from '../../shared/types/settings';
+import type { ProviderType } from './ui/provider-selector';
 import {
   DEFAULT_AGENT_PROFILES,
   DEFAULT_PHASE_MODELS,
@@ -117,6 +118,9 @@ export function TaskCreationWizard({
   // Review setting
   const [requireReviewBeforeCoding, setRequireReviewBeforeCoding] = useState(false);
 
+  // Provider selection
+  const [provider, setProvider] = useState<ProviderType>('claude');
+
   // Draft state
   const [isDraftRestored, setIsDraftRestored] = useState(false);
 
@@ -177,6 +181,7 @@ export function TaskCreationWizard({
         setImages([]);
         setReferencedFiles([]);
         setRequireReviewBeforeCoding(false);
+        setProvider('claude');
         setBaseBranch(PROJECT_DEFAULT_BRANCH);
         setUseWorktree(true);
         setIsDraftRestored(false);
@@ -422,6 +427,7 @@ export function TaskCreationWizard({
       if (images.length > 0) metadata.attachedImages = images;
       if (allReferencedFiles.length > 0) metadata.referencedFiles = allReferencedFiles;
       if (requireReviewBeforeCoding) metadata.requireReviewBeforeCoding = true;
+      if (provider && provider !== 'claude') metadata.provider = provider;
       // Always include baseBranch - resolve PROJECT_DEFAULT_BRANCH to actual branch name
       // This ensures the backend always knows which branch to use for worktree creation
       if (baseBranch === PROJECT_DEFAULT_BRANCH) {
@@ -463,6 +469,7 @@ export function TaskCreationWizard({
     setImages([]);
     setReferencedFiles([]);
     setRequireReviewBeforeCoding(false);
+    setProvider('claude');
     setBaseBranch(PROJECT_DEFAULT_BRANCH);
     setUseWorktree(true);
     setError(null);
@@ -648,6 +655,8 @@ export function TaskCreationWizard({
           disabled={isCreating}
           error={error}
           onError={setError}
+          provider={provider}
+          onProviderChange={setProvider}
           onFileReferenceDrop={handleFileReferenceDrop}
           idPrefix="create"
         >

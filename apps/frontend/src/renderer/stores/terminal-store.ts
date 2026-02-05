@@ -79,7 +79,7 @@ export function writeToTerminal(terminalId: string, data: string): void {
 export type TerminalStatus = 'idle' | 'running' | 'claude-active' | 'exited';
 
 // Provider type for multi-CLI support
-export type TerminalProviderType = 'claude' | 'gemini' | 'openai';
+export type TerminalProviderType = 'claude' | 'gemini' | 'openai' | 'opencode';
 
 export interface Terminal {
   id: string;

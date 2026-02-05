@@ -8,6 +8,8 @@ import type {
   ICredentialManager,
   IRateLimitHandler,
 } from '../provider-interface';
+import { createGoogleOAuthManager } from '../oauth/google-oauth';
+import { OAuthManager } from '../oauth/oauth-manager';
 import type {
   ProviderType,
   ProviderProfile,
@@ -18,22 +20,73 @@ import type {
 import { ProviderType as PT } from '../types';
 
 class GeminiAuthHandler implements IAuthHandler {
+  private oauthManager: OAuthManager;
+
+  constructor() {
+    this.oauthManager = createGoogleOAuthManager();
+  }
+
   async authenticate(_configDir?: string): Promise<ProviderCredentials> {
+    // Try environment variables first (legacy/dev support)
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-    return {
-      providerType: PT.GEMINI,
-      apiKey,
-    };
+    if (apiKey) {
+      return {
+        providerType: PT.GEMINI,
+        apiKey,
+      };
+    }
+
+    try {
+      const tokens = await this.oauthManager.startAuthFlow();
+      return {
+        providerType: PT.GEMINI,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresAt: tokens.expiresAt,
+        metadata: {
+          scope: tokens.scope,
+          tokenType: tokens.tokenType,
+        },
+      };
+    } catch (error) {
+      console.error('Gemini OAuth failed:', error);
+      throw error;
+    }
   }
 
   async refreshCredentials(
     credentials: ProviderCredentials
   ): Promise<ProviderCredentials> {
+    if (credentials.refreshToken) {
+      try {
+        const tokens = await this.oauthManager.refreshTokens(credentials.refreshToken);
+        return {
+          ...credentials,
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken || credentials.refreshToken,
+          expiresAt: tokens.expiresAt,
+        };
+      } catch (error) {
+        console.error('Token refresh failed:', error);
+        // If refresh fails, we return the old credentials
+        // validation will fail if they are expired
+        return credentials;
+      }
+    }
     return credentials;
   }
 
   async validateCredentials(credentials: ProviderCredentials): Promise<boolean> {
-    return !!credentials.apiKey;
+    if (credentials.apiKey) {
+      return true;
+    }
+
+    if (credentials.accessToken && credentials.expiresAt) {
+      // Check if token is expired or about to expire (within 5 mins)
+      return Date.now() < credentials.expiresAt - 300000;
+    }
+
+    return false;
   }
 
   async revokeCredentials(_credentials: ProviderCredentials): Promise<void> {}
@@ -80,7 +133,7 @@ export class GeminiCLIProvider implements ICLIProvider {
   readonly providerType: ProviderType = PT.GEMINI;
 
   readonly capabilities: ProviderCapabilities = {
-    supportsOAuth: false,
+    supportsOAuth: true,
     supportsApiKey: true,
     supportsSessionResume: false,
     supportsProfileSwitch: true,
@@ -99,7 +152,15 @@ export class GeminiCLIProvider implements ICLIProvider {
 
   async initialize(profile: ProviderProfile): Promise<void> {
     this.currentProfile = profile;
-    this.credentials = await this.authHandler.authenticate();
+
+    // Try to retrieve stored credentials first
+    this.credentials = await this.credentialManager.retrieve(profile.id);
+
+    // If no credentials or expired/invalid, start auth flow
+    if (!this.credentials || !(await this.authHandler.validateCredentials(this.credentials))) {
+      this.credentials = await this.authHandler.authenticate();
+      await this.credentialManager.store(profile.id, this.credentials);
+    }
   }
 
   async dispose(): Promise<void> {
@@ -119,6 +180,9 @@ export class GeminiCLIProvider implements ICLIProvider {
     const env: Record<string, string> = {};
     if (this.credentials?.apiKey) {
       env.GEMINI_API_KEY = this.credentials.apiKey;
+    }
+    if (this.credentials?.accessToken) {
+      env.GOOGLE_ACCESS_TOKEN = this.credentials.accessToken;
     }
     return env;
   }
@@ -142,7 +206,8 @@ export class GeminiCLIProvider implements ICLIProvider {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    return !!this.credentials?.apiKey;
+    if (!this.credentials) return false;
+    return this.authHandler.validateCredentials(this.credentials);
   }
 
   getAuthHandler(): IAuthHandler {

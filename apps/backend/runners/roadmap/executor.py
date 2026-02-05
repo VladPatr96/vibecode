@@ -1,11 +1,15 @@
 """
 Execution layer for agents and scripts in the roadmap generation process.
+Supports multiple providers: Claude (default), Gemini, OpenAI.
 """
 
 import subprocess
 import sys
 from pathlib import Path
 
+from agents.task_config import get_task_provider
+from core.providers import create_provider
+from core.providers.types import ProviderType
 from debug import debug, debug_detailed, debug_error, debug_success
 
 
@@ -64,7 +68,10 @@ class ScriptExecutor:
 
 
 class AgentExecutor:
-    """Executes Claude AI agents with specific prompts."""
+    """Executes Claude AI agents with specific prompts.
+
+    Supports multiple providers: Claude (default), Gemini, OpenAI.
+    """
 
     def __init__(
         self,
@@ -73,12 +80,14 @@ class AgentExecutor:
         model: str,
         create_client_func,
         thinking_budget: int | None = None,
+        provider: str | None = None,
     ):
         self.project_dir = project_dir
         self.output_dir = output_dir
         self.model = model
         self.create_client = create_client_func
         self.thinking_budget = thinking_budget
+        self.provider = provider
         # Go up from roadmap/ -> runners/ -> auto-claude/prompts/
         self.prompts_dir = Path(__file__).parent.parent.parent / "prompts"
 
@@ -119,20 +128,38 @@ class AgentExecutor:
                 context_length=len(additional_context),
             )
 
+        # Determine provider type
+        provider_type = get_task_provider(self.output_dir, self.provider)
+
+        # Thinking budget only applies to Claude
+        effective_thinking = self.thinking_budget if provider_type == ProviderType.CLAUDE else None
+
         # Create client with thinking budget
         debug(
             "roadmap_executor",
-            "Creating Claude client",
+            "Creating AI client",
             project_dir=str(self.project_dir),
             model=self.model,
-            thinking_budget=self.thinking_budget,
+            provider=provider_type.value,
+            thinking_budget=effective_thinking,
         )
-        client = self.create_client(
-            self.project_dir,
-            self.output_dir,
-            self.model,
-            max_thinking_tokens=self.thinking_budget,
-        )
+
+        # Create provider-specific client
+        if provider_type == ProviderType.CLAUDE:
+            client = self.create_client(
+                self.project_dir,
+                self.output_dir,
+                self.model,
+                max_thinking_tokens=effective_thinking,
+            )
+        else:
+            client = create_provider(
+                provider_type=provider_type,
+                project_dir=self.project_dir,
+                spec_dir=self.output_dir,
+                model=self.model,
+                agent_type="roadmap",
+            )
 
         try:
             async with client:

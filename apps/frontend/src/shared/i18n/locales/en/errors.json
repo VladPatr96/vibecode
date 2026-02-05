@@ -5,5 +5,24 @@
       "titleSuffix": "(JSON Error)",
       "description": "⚠️ JSON Parse Error: {{error}}\n\nThe implementation_plan.json file is malformed. Run the backend auto-fix or manually repair the file."
     }
+  },
+  "provider": {
+    "authFailed": "Authentication Failed",
+    "tokenExpired": "Token Expired",
+    "rateLimited": "Rate Limit Exceeded",
+    "unavailable": "Service Unavailable",
+    "descriptions": {
+      "authFailed": "We couldn't authenticate with {{provider}}. Please check your credentials.",
+      "tokenExpired": "Your session with {{provider}} has expired. Please re-authenticate.",
+      "rateLimited": "You've hit the rate limit for {{provider}}. Please wait or switch to another provider.",
+      "unavailable": "The {{provider}} service is currently unavailable. Please try again later or switch providers.",
+      "generic": "An error occurred with {{provider}}: {{message}}"
+    },
+    "actions": {
+      "retry": "Retry",
+      "reauthenticate": "Re-authenticate",
+      "switchProvider": "Switch Provider",
+      "cancel": "Cancel"
+    }
   }
 }

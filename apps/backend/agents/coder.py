@@ -3,6 +3,7 @@ Coder Agent Module
 ==================
 
 Main autonomous agent loop that runs the coder agent to implement subtasks.
+Supports multiple providers: Claude (default), Gemini, OpenAI.
 """
 
 import asyncio
@@ -11,6 +12,8 @@ import os
 from pathlib import Path
 
 from core.client import create_client
+from core.providers import create_provider, get_provider_capabilities
+from core.providers.types import ProviderType
 from linear_updater import (
     LinearTaskState,
     is_linear_enabled,
@@ -65,6 +68,7 @@ from .base import (
 )
 from .memory_manager import debug_memory_system_status, get_graphiti_context
 from .session import post_session_processing, run_agent_session
+from .task_config import get_task_provider, get_provider_model, get_provider_thinking_budget
 from .utils import (
     find_phase_for_subtask,
     get_commit_count,
@@ -83,6 +87,7 @@ async def run_autonomous_agent(
     max_iterations: int | None = None,
     verbose: bool = False,
     source_spec_dir: Path | None = None,
+    provider: str | None = None,
 ) -> None:
     """
     Run the autonomous agent loop with automatic memory management.
@@ -93,11 +98,25 @@ async def run_autonomous_agent(
     Args:
         project_dir: Root directory for the project
         spec_dir: Directory containing the spec (auto-claude/specs/001-name/)
-        model: Claude model to use
+        model: Claude model to use (or provider-specific model)
         max_iterations: Maximum number of iterations (None for unlimited)
         verbose: Whether to show detailed output
         source_spec_dir: Original spec directory in main project (for syncing from worktree)
+        provider: Provider type ('claude', 'gemini', 'openai') - defaults to task config or 'claude'
     """
+    # Determine provider from task config or CLI
+    provider_type = get_task_provider(spec_dir, provider)
+    provider_caps = get_provider_capabilities(provider_type)
+
+    # Log provider info
+    if provider_type != ProviderType.CLAUDE:
+        print_status(f"Using provider: {provider_type.value.upper()}", "info")
+        if not provider_caps.get("supports_extended_thinking"):
+            print_status("Extended thinking: not supported", "warning")
+        if not provider_caps.get("supports_mcp"):
+            print_status("MCP: via MCP Bridge", "info")
+        print()
+
     # Set environment variable for security hooks to find the correct project directory
     # This is needed because os.getcwd() may return the wrong directory in worktree mode
     os.environ[PROJECT_DIR_ENV_VAR] = str(project_dir.resolve())

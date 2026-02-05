@@ -12,7 +12,7 @@ from pathlib import Path
 from analysis.analyzers import analyze_project
 from core.task_event import TaskEventEmitter
 from core.workspace.models import SpecNumberLock
-from phase_config import get_thinking_budget
+from phase_config import get_thinking_budget, get_phase_provider
 from prompts_pkg.project_context import should_refresh_project_index
 from review import run_review_checkpoint
 from task_logger import (
@@ -62,6 +62,7 @@ class SpecOrchestrator:
         thinking_level: str = "medium",  # Thinking level for extended thinking
         complexity_override: str | None = None,  # Force a specific complexity
         use_ai_assessment: bool = True,  # Use AI for complexity assessment (vs heuristics)
+        provider: str = "claude",  # AI provider (claude, gemini, openai)
     ):
         """Initialize the spec orchestrator.
 
@@ -74,6 +75,7 @@ class SpecOrchestrator:
             thinking_level: Thinking level (none, low, medium, high, ultrathink)
             complexity_override: Force a specific complexity level
             use_ai_assessment: Whether to use AI for complexity assessment
+            provider: AI provider to use
         """
         self.project_dir = Path(project_dir)
         self.task_description = task_description
@@ -81,6 +83,7 @@ class SpecOrchestrator:
         self.thinking_level = thinking_level
         self.complexity_override = complexity_override
         self.use_ai_assessment = use_ai_assessment
+        self.provider = provider
 
         # Get the appropriate specs directory (within the project)
         self.specs_dir = get_specs_dir(self.project_dir)
@@ -123,7 +126,7 @@ class SpecOrchestrator:
         if self._agent_runner is None:
             task_logger = get_task_logger(self.spec_dir)
             self._agent_runner = AgentRunner(
-                self.project_dir, self.spec_dir, self.model, task_logger
+                self.project_dir, self.spec_dir, self.model, task_logger, provider=self.provider
             )
         return self._agent_runner
 
@@ -150,6 +153,11 @@ class SpecOrchestrator:
         # Use user's configured thinking level for all spec phases
         thinking_budget = get_thinking_budget(self.thinking_level)
 
+        # Resolve provider for this phase (allows phase-specific provider overrides)
+        phase_provider = get_phase_provider(
+            self.spec_dir, phase_name or "spec", self.provider
+        )
+
         # Format prior phase summaries for context
         prior_summaries = format_phase_summaries(self._phase_summaries)
 
@@ -159,6 +167,7 @@ class SpecOrchestrator:
             interactive,
             thinking_budget=thinking_budget,
             prior_phase_summaries=prior_summaries if prior_summaries else None,
+            provider=phase_provider,
         )
 
     async def _store_phase_summary(self, phase_name: str) -> None:

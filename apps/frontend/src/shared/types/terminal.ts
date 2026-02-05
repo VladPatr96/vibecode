@@ -47,6 +47,21 @@ export interface TerminalSession {
   worktreeConfig?: TerminalWorktreeConfig;
 }
 
+/**
+ * Auth error types for provider integration
+ */
+export type AuthErrorType = 'auth_failed' | 'token_expired' | 'rate_limit' | 'unavailable';
+
+/**
+ * Auth error event data
+ */
+export interface AuthErrorEvent {
+  terminalId: string;
+  providerType: string;
+  errorType: AuthErrorType;
+  message?: string;
+}
+
 export interface TerminalRestoreResult {
   success: boolean;
   terminalId: string;

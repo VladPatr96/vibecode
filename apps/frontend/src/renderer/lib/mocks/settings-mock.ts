@@ -13,6 +13,9 @@ export const settingsMock = {
 
   saveSettings: async () => ({ success: true }),
 
+  // Environment variable operations
+  setEnvVariable: async (_key: string, _value: string) => ({ success: true }),
+
   // Sentry error reporting
   notifySentryStateChanged: (_enabled: boolean) => {
     console.warn('[browser-mock] notifySentryStateChanged called');

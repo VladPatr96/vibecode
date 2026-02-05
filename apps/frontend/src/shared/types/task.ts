@@ -233,6 +233,9 @@ export interface TaskMetadata {
   phaseModels?: PhaseModelConfig;  // Per-phase model configuration
   phaseThinking?: PhaseThinkingConfig;  // Per-phase thinking configuration
 
+  // Provider configuration (multi-provider support)
+  provider?: 'claude' | 'gemini' | 'openai';  // AI provider to use (default: claude)
+
   // Git/Worktree configuration
   baseBranch?: string;  // Override base branch for this task's worktree
   prUrl?: string;  // GitHub PR URL if task has been submitted as a PR

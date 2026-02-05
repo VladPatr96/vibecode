@@ -31,12 +31,16 @@ export interface FeatureDetailPanelProps {
   competitorInsights?: CompetitorPainPoint[];
 }
 
+export type ProviderType = 'claude' | 'gemini' | 'openai';
+
 export interface RoadmapHeaderProps {
   roadmap: Roadmap;
   competitorAnalysis: CompetitorAnalysis | null;
   onAddFeature: () => void;
   onRefresh: () => void;
   onViewCompetitorAnalysis?: () => void;
+  provider?: ProviderType;
+  onProviderChange?: (provider: ProviderType) => void;
 }
 
 export interface RoadmapEmptyStateProps {

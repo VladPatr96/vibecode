@@ -1,11 +1,20 @@
 import { useTranslation } from 'react-i18next';
-import { Lightbulb, Eye, EyeOff, Settings2, Plus, Trash2, RefreshCw, CheckSquare, X } from 'lucide-react';
+import { Lightbulb, Eye, EyeOff, Settings2, Plus, Trash2, RefreshCw, CheckSquare, X, Check } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel
+} from '../ui/dropdown-menu';
 import { IDEATION_TYPE_COLORS } from '../../../shared/constants';
 import type { IdeationType } from '../../../shared/types';
 import { TypeIcon } from './TypeIcon';
+
+export type ProviderType = 'claude' | 'gemini' | 'openai';
 
 interface IdeationHeaderProps {
   totalIdeas: number;
@@ -22,6 +31,8 @@ interface IdeationHeaderProps {
   onRefresh: () => void;
   hasActiveIdeas: boolean;
   canAddMore: boolean;
+  provider?: ProviderType;
+  onProviderChange?: (provider: ProviderType) => void;
 }
 
 export function IdeationHeader({
@@ -38,7 +49,9 @@ export function IdeationHeader({
   onClearSelection,
   onRefresh,
   hasActiveIdeas,
-  canAddMore
+  canAddMore,
+  provider = 'claude',
+  onProviderChange
 }: IdeationHeaderProps) {
   const { t } = useTranslation('common');
   const hasSelection = selectedCount > 0;
@@ -172,6 +185,50 @@ export function IdeationHeader({
             </TooltipTrigger>
             <TooltipContent>{t('accessibility.regenerateIdeasAriaLabel')}</TooltipContent>
           </Tooltip>
+
+          {/* Provider Selector */}
+          {onProviderChange && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-2 px-2"
+                  title={`Provider: ${provider}`}
+                >
+                  <span>{provider === 'claude' ? '🟠' : provider === 'gemini' ? '🔵' : '🟢'}</span>
+                  <span className="text-xs capitalize">{provider}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>AI Provider</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => onProviderChange('claude')}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  <span>🟠</span>
+                  <span className="flex-1">Claude</span>
+                  {provider === 'claude' && <Check className="h-4 w-4 text-primary" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onProviderChange('gemini')}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  <span>🔵</span>
+                  <span className="flex-1">Gemini</span>
+                  {provider === 'gemini' && <Check className="h-4 w-4 text-primary" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onProviderChange('openai')}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  <span>🟢</span>
+                  <span className="flex-1">OpenAI</span>
+                  {provider === 'openai' && <Check className="h-4 w-4 text-primary" />}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 

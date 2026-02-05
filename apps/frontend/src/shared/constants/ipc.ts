@@ -109,6 +109,7 @@ export const IPC_CHANNELS = {
   TERMINAL_CLAUDE_EXIT: 'terminal:claudeExit',  // Claude Code exited (returned to shell)
   TERMINAL_ONBOARDING_COMPLETE: 'terminal:onboardingComplete',  // Claude onboarding complete (ready for input after login)
   TERMINAL_PROFILE_CHANGED: 'terminal:profileChanged',  // Profile changed, terminals need refresh (main -> renderer)
+  TERMINAL_AUTH_ERROR: 'terminal:authError',  // Auth/Rate Limit error detected (main -> renderer)
 
   // Claude profile management (multi-account support)
   CLAUDE_PROFILES_GET: 'claude:profilesGet',
@@ -537,6 +538,19 @@ export const IPC_CHANNELS = {
   DEBUG_COPY_DEBUG_INFO: 'debug:copyDebugInfo',
   DEBUG_GET_RECENT_ERRORS: 'debug:getRecentErrors',
   DEBUG_LIST_LOG_FILES: 'debug:listLogFiles',
+
+  // Gemini CLI profile management
+  GEMINI_PROFILE_AUTHENTICATE: 'gemini:profileAuthenticate',  // Open terminal for OAuth login
+  GEMINI_PROFILE_VERIFY_AUTH: 'gemini:profileVerifyAuth',  // Check if authenticated
+  GEMINI_PROFILES_GET: 'gemini:profilesGet',
+  GEMINI_PROFILE_SAVE: 'gemini:profileSave',
+  GEMINI_PROFILE_DELETE: 'gemini:profileDelete',
+
+  // OpenAI CLI profile management
+  OPENAI_PROFILE_SAVE: 'openai:profileSave',
+  OPENAI_PROFILE_DELETE: 'openai:profileDelete',
+  OPENAI_PROFILES_GET: 'openai:profilesGet',
+  OPENAI_PROFILE_VERIFY_AUTH: 'openai:profileVerifyAuth',
 
   // Claude Code CLI operations
   CLAUDE_CODE_CHECK_VERSION: 'claudeCode:checkVersion',

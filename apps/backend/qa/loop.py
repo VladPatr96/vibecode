@@ -4,6 +4,7 @@ QA Validation Loop Orchestration
 
 Main QA loop that coordinates reviewer and fixer sessions until
 approval or max iterations.
+Supports multiple providers: Claude (default), Gemini, OpenAI.
 """
 
 import os
@@ -11,6 +12,8 @@ import time as time_module
 from pathlib import Path
 
 from core.client import create_client
+from core.providers import create_provider, get_provider_capabilities
+from core.providers.types import ProviderType
 from core.task_event import TaskEventEmitter
 from debug import debug, debug_error, debug_section, debug_success, debug_warning
 from linear_updater import (
@@ -47,9 +50,52 @@ from .report import (
 )
 from .reviewer import run_qa_agent_session
 
+# Import task_config for provider support
+from agents.task_config import get_task_provider
+
 # Configuration
 MAX_QA_ITERATIONS = 50
 MAX_CONSECUTIVE_ERRORS = 3  # Stop after 3 consecutive errors without progress
+
+
+def _create_qa_client(
+    project_dir: Path,
+    spec_dir: Path,
+    model: str,
+    agent_type: str,
+    provider_type: ProviderType,
+    thinking_budget: int | None = None,
+):
+    """
+    Create a client for QA operations based on provider type.
+
+    Args:
+        project_dir: Project root directory
+        spec_dir: Spec directory
+        model: Model to use
+        agent_type: Agent type ('qa_reviewer' or 'qa_fixer')
+        provider_type: Provider type enum
+        thinking_budget: Optional thinking budget (Claude only)
+
+    Returns:
+        Configured client for the provider
+    """
+    if provider_type == ProviderType.CLAUDE:
+        return create_client(
+            project_dir,
+            spec_dir,
+            model,
+            agent_type=agent_type,
+            max_thinking_tokens=thinking_budget,
+        )
+    else:
+        return create_provider(
+            provider_type=provider_type,
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            model=model,
+            agent_type=agent_type,
+        )
 
 
 # =============================================================================
@@ -62,6 +108,7 @@ async def run_qa_validation_loop(
     spec_dir: Path,
     model: str,
     verbose: bool = False,
+    provider: str | None = None,
 ) -> bool:
     """
     Run the full QA validation loop.
@@ -76,16 +123,28 @@ async def run_qa_validation_loop(
     - Iteration tracking with detailed history
     - Recurring issue detection (3+ occurrences → human escalation)
     - No-test project handling
+    - Multi-provider support (Claude, Gemini, OpenAI)
 
     Args:
         project_dir: Project root directory
         spec_dir: Spec directory
-        model: Claude model to use
+        model: Model to use (provider-specific)
         verbose: Whether to show detailed output
+        provider: Provider type ('claude', 'gemini', 'openai') - defaults to task config or 'claude'
 
     Returns:
         True if QA approved, False otherwise
     """
+    # Determine provider from task config or CLI
+    provider_type = get_task_provider(spec_dir, provider)
+    provider_caps = get_provider_capabilities(provider_type)
+
+    # Log provider info for non-Claude
+    if provider_type != ProviderType.CLAUDE:
+        print(f"\n📦 Using provider: {provider_type.value.upper()}")
+        if not provider_caps.get("supports_extended_thinking"):
+            print("   ⚠️  Extended thinking: not supported")
+
     # Set environment variable for security hooks to find the correct project directory
     # This is needed because os.getcwd() may return the wrong directory in worktree mode
     os.environ[PROJECT_DIR_ENV_VAR] = str(project_dir.resolve())
@@ -98,6 +157,7 @@ async def run_qa_validation_loop(
         project_dir=str(project_dir),
         spec_dir=str(spec_dir),
         model=model,
+        provider=provider_type.value,
         max_iterations=MAX_QA_ITERATIONS,
     )
 
@@ -155,14 +215,15 @@ async def run_qa_validation_loop(
 
         # Get model and thinking budget for fixer (uses QA phase config)
         qa_model = get_phase_model(spec_dir, "qa", model)
-        fixer_thinking_budget = get_phase_thinking_budget(spec_dir, "qa")
+        fixer_thinking_budget = get_phase_thinking_budget(spec_dir, "qa") if provider_type == ProviderType.CLAUDE else None
 
-        fix_client = create_client(
+        fix_client = _create_qa_client(
             project_dir,
             spec_dir,
             qa_model,
-            agent_type="qa_fixer",
-            max_thinking_tokens=fixer_thinking_budget,
+            "qa_fixer",
+            provider_type,
+            fixer_thinking_budget,
         )
 
         async with fix_client:
@@ -238,19 +299,21 @@ async def run_qa_validation_loop(
 
         # Run QA reviewer with phase-specific model and thinking budget
         qa_model = get_phase_model(spec_dir, "qa", model)
-        qa_thinking_budget = get_phase_thinking_budget(spec_dir, "qa")
+        qa_thinking_budget = get_phase_thinking_budget(spec_dir, "qa") if provider_type == ProviderType.CLAUDE else None
         debug(
             "qa_loop",
             "Creating client for QA reviewer session...",
             model=qa_model,
             thinking_budget=qa_thinking_budget,
+            provider=provider_type.value,
         )
-        client = create_client(
+        client = _create_qa_client(
             project_dir,
             spec_dir,
             qa_model,
-            agent_type="qa_reviewer",
-            max_thinking_tokens=qa_thinking_budget,
+            "qa_reviewer",
+            provider_type,
+            qa_thinking_budget,
         )
 
         async with client:
@@ -426,12 +489,13 @@ async def run_qa_validation_loop(
                 break
 
             # Run fixer with phase-specific thinking budget
-            fixer_thinking_budget = get_phase_thinking_budget(spec_dir, "qa")
+            fixer_thinking_budget = get_phase_thinking_budget(spec_dir, "qa") if provider_type == ProviderType.CLAUDE else None
             debug(
                 "qa_loop",
                 "Starting QA fixer session...",
                 model=qa_model,
                 thinking_budget=fixer_thinking_budget,
+                provider=provider_type.value,
             )
             emit_phase(ExecutionPhase.QA_FIXING, "Fixing QA issues")
             task_event_emitter.emit(
@@ -440,12 +504,13 @@ async def run_qa_validation_loop(
             )
             print("\nRunning QA Fixer Agent...")
 
-            fix_client = create_client(
+            fix_client = _create_qa_client(
                 project_dir,
                 spec_dir,
                 qa_model,
-                agent_type="qa_fixer",
-                max_thinking_tokens=fixer_thinking_budget,
+                "qa_fixer",
+                provider_type,
+                fixer_thinking_budget,
             )
 
             async with fix_client:
