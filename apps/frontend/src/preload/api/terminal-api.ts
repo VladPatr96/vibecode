@@ -96,6 +96,7 @@ export interface TerminalAPI {
   ) => () => void;
   onTerminalPendingResume: (callback: (id: string, sessionId?: string) => void) => () => void;
   onTerminalProfileChanged: (callback: (event: TerminalProfileChangedEvent) => void) => () => void;
+  onTerminalAuthError: (callback: (event: import('../../shared/types').AuthErrorEvent) => void) => () => void;
 
   // Claude Profile Management
   getClaudeProfiles: () => Promise<IPCResult<ClaudeProfileSettings>>;
@@ -429,6 +430,21 @@ export const createTerminalAPI = (): TerminalAPI => ({
     ipcRenderer.on(IPC_CHANNELS.TERMINAL_PROFILE_CHANGED, handler);
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL_PROFILE_CHANGED, handler);
+    };
+  },
+
+  onTerminalAuthError: (
+    callback: (event: import('../../shared/types').AuthErrorEvent) => void
+  ): (() => void) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      event: import('../../shared/types').AuthErrorEvent
+    ): void => {
+      callback(event);
+    };
+    ipcRenderer.on(IPC_CHANNELS.TERMINAL_AUTH_ERROR, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL_AUTH_ERROR, handler);
     };
   },
 

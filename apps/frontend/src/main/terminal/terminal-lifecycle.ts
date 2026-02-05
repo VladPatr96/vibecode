@@ -17,6 +17,55 @@ import type {
 } from './types';
 import { isWindows } from '../platform';
 import { debugLog, debugError } from '../../shared/utils/debug-logger';
+import type { AuthErrorType } from '../../shared/types/terminal';
+
+/**
+ * Setup provider integration handlers for a terminal
+ */
+export function setupProviderIntegration(
+  terminalId: string,
+  getWindow: WindowGetter,
+  callbacks: {
+    onAuthError?: (errorType: AuthErrorType, message?: string) => void;
+  }
+) {
+  // This helper is used to construct the callbacks for the provider output handler
+  // The actual hooking happens in terminal-event-handler.ts where data flows
+  return {
+    onApiKeyError: () => {
+      debugLog('[TerminalLifecycle] API Key Error detected for terminal:', terminalId);
+      if (callbacks.onAuthError) {
+        callbacks.onAuthError('auth_failed', 'API Key invalid or expired');
+      }
+
+      const win = getWindow();
+      if (win) {
+        win.webContents.send(IPC_CHANNELS.TERMINAL_AUTH_ERROR, {
+          terminalId,
+          providerType: 'unknown', // Will be populated by event handler
+          errorType: 'auth_failed',
+          message: 'API Key invalid or expired'
+        });
+      }
+    },
+    onRateLimit: (info: any) => {
+      debugLog('[TerminalLifecycle] Rate Limit detected for terminal:', terminalId, info);
+      if (callbacks.onAuthError) {
+        callbacks.onAuthError('rate_limit', `Rate limit exceeded. Reset at: ${info.resetTime || 'unknown'}`);
+      }
+
+      const win = getWindow();
+      if (win) {
+        win.webContents.send(IPC_CHANNELS.TERMINAL_AUTH_ERROR, {
+          terminalId,
+          providerType: 'unknown', // Will be populated by event handler
+          errorType: 'rate_limit',
+          message: `Rate limit exceeded. Reset at: ${info.resetTime || 'unknown'}`
+        });
+      }
+    }
+  };
+}
 
 /**
  * Options for terminal restoration

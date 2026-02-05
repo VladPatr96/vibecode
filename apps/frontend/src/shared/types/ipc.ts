@@ -63,6 +63,7 @@ import type {
   TerminalWorktreeConfig,
   TerminalWorktreeResult,
   OtherWorktreeInfo,
+  AuthErrorEvent,
 } from './terminal';
 import type {
   ClaudeProfileSettings,
@@ -277,6 +278,8 @@ export interface ElectronAPI {
   onTerminalPendingResume: (callback: (id: string, sessionId?: string) => void) => () => void;
   /** Listen for profile change events - terminals need to be recreated with new profile env vars */
   onTerminalProfileChanged: (callback: (event: TerminalProfileChangedEvent) => void) => () => void;
+  /** Listen for auth errors (API key invalid, rate limits, etc.) */
+  onTerminalAuthError: (callback: (event: AuthErrorEvent) => void) => () => void;
   /** Listen for OAuth code input requests (manual OAuth flow) */
   onTerminalOAuthCodeNeeded: (callback: (info: {
     terminalId: string;
@@ -690,6 +693,7 @@ export interface ElectronAPI {
   getSourceEnv: () => Promise<IPCResult<SourceEnvConfig>>;
   updateSourceEnv: (config: { claudeOAuthToken?: string }) => Promise<IPCResult>;
   checkSourceToken: () => Promise<IPCResult<SourceEnvCheckResult>>;
+  setEnvVariable: (key: string, value: string) => Promise<IPCResult>;
 
   // Changelog operations
   getChangelogDoneTasks: (projectId: string, tasks?: Task[]) => Promise<IPCResult<ChangelogTask[]>>;

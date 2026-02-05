@@ -109,6 +109,7 @@ export const IPC_CHANNELS = {
   TERMINAL_CLAUDE_EXIT: 'terminal:claudeExit',  // Claude Code exited (returned to shell)
   TERMINAL_ONBOARDING_COMPLETE: 'terminal:onboardingComplete',  // Claude onboarding complete (ready for input after login)
   TERMINAL_PROFILE_CHANGED: 'terminal:profileChanged',  // Profile changed, terminals need refresh (main -> renderer)
+  TERMINAL_AUTH_ERROR: 'terminal:authError',  // Auth/Rate Limit error detected (main -> renderer)
 
   // Claude profile management (multi-account support)
   CLAUDE_PROFILES_GET: 'claude:profilesGet',

@@ -33,13 +33,14 @@ import {
 } from './ui/dropdown-menu';
 import { FileExplorerPanel } from './FileExplorerPanel';
 import { NewTerminalDialog } from './terminal/NewTerminalDialog';
+import { AuthErrorDialog } from './dialogs/AuthErrorDialog';
 import type { ProviderType, ProviderProfile } from './providers/ProviderSelector';
 import { cn } from '../lib/utils';
 import { useTerminalStore } from '../stores/terminal-store';
 import { useTaskStore } from '../stores/task-store';
 import { useFileExplorerStore } from '../stores/file-explorer-store';
 import { TERMINAL_DOM_UPDATE_DELAY_MS } from '../../shared/constants';
-import type { SessionDateInfo } from '../../shared/types';
+import type { SessionDateInfo, AuthErrorEvent } from '../../shared/types';
 import { PROVIDER_COLORS } from '../../shared/constants/provider-colors';
 
 // Safelist for dynamic classes constructed with opacity modifiers
@@ -90,6 +91,9 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
 
   // New terminal dialog state for provider selection
   const [isNewTerminalDialogOpen, setIsNewTerminalDialogOpen] = useState(false);
+
+  // Auth error dialog state
+  const [authError, setAuthError] = useState<AuthErrorEvent | null>(null);
 
   // Get setTerminalProvider from store
   const setTerminalProvider = useTerminalStore((state) => state.setTerminalProvider);
@@ -260,6 +264,15 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isActive, addTerminal, canAddTerminal, projectPath, activeTerminalId, handleCloseTerminal]);
+
+  // Listen for auth errors
+  useEffect(() => {
+    const removeListener = window.electronAPI.onTerminalAuthError((event) => {
+      console.warn('[TerminalGrid] Auth error detected:', event);
+      setAuthError(event);
+    });
+    return removeListener;
+  }, []);
 
   // Open new terminal dialog for provider selection
   const handleAddTerminal = useCallback(() => {
@@ -445,6 +458,28 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
           onClose={() => setIsNewTerminalDialogOpen(false)}
           onCreateTerminal={handleCreateTerminalWithProvider}
         />
+
+        {/* Auth Error Dialog */}
+        {authError && (
+          <AuthErrorDialog
+            isOpen={!!authError}
+            providerType={authError.providerType || 'Provider'}
+            errorType={authError.errorType}
+            errorMessage={authError.message}
+            onClose={() => setAuthError(null)}
+            onRetry={() => {
+              // Just close the dialog for now, user can retry manually
+              setAuthError(null);
+            }}
+            onSwitchProvider={() => {
+              setAuthError(null);
+              // Open new terminal dialog to let user pick a different provider/profile
+              // Ideally we would replace the current terminal's provider, but for now
+              // creating a new one is a safe fallback
+              setIsNewTerminalDialogOpen(true);
+            }}
+          />
+        )}
       </>
     );
   }
@@ -663,6 +698,25 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
         onClose={() => setIsNewTerminalDialogOpen(false)}
         onCreateTerminal={handleCreateTerminalWithProvider}
       />
+
+      {/* Auth Error Dialog */}
+      {authError && (
+        <AuthErrorDialog
+          isOpen={!!authError}
+          providerType={authError.providerType || 'Provider'}
+          errorType={authError.errorType}
+          errorMessage={authError.message}
+          onClose={() => setAuthError(null)}
+          onRetry={() => {
+            // Just close the dialog for now, user can retry manually
+            setAuthError(null);
+          }}
+          onSwitchProvider={() => {
+            setAuthError(null);
+            setIsNewTerminalDialogOpen(true);
+          }}
+        />
+      )}
     </DndContext>
   );
 }
