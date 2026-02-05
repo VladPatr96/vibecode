@@ -444,10 +444,40 @@ const OPENAI_IDLE_PATTERNS = [
 ];
 
 /**
+ * Opencode CLI rate limit patterns
+ */
+const OPENCODE_RATE_LIMIT_PATTERNS = [
+  /rate limit/i,
+  /too many requests/i,
+  /quota exceeded/i,
+  /throttled/i,
+];
+
+/**
+ * Opencode busy/processing patterns
+ */
+const OPENCODE_BUSY_PATTERNS = [
+  /Thinking\.\.\./i,
+  /Processing\.\.\./i,
+  /Generating\.\.\./i,
+  /Running\.\.\./i,
+  /●/,                              // Response indicator
+  /\u25cf/,                         // Unicode bullet point
+];
+
+/**
+ * Opencode idle/ready patterns
+ */
+const OPENCODE_IDLE_PATTERNS = [
+  /^>\s*$/m,                        // Simple prompt
+  /\n>\s*$/,                        // Prompt at end
+];
+
+/**
  * Rate limit info structure
  */
 export interface ProviderRateLimitInfo {
-  provider: 'claude' | 'gemini' | 'openai';
+  provider: 'claude' | 'gemini' | 'openai' | 'opencode';
   resetTime?: string;
   message?: string;
 }
@@ -457,7 +487,7 @@ export interface ProviderRateLimitInfo {
  */
 export function detectProviderRateLimit(
   data: string,
-  providerType?: 'claude' | 'gemini' | 'openai'
+  providerType?: 'claude' | 'gemini' | 'openai' | 'opencode'
 ): ProviderRateLimitInfo | null {
   // Claude rate limit
   if (!providerType || providerType === 'claude') {
@@ -495,6 +525,18 @@ export function detectProviderRateLimit(
     }
   }
 
+  // Opencode rate limit
+  if (!providerType || providerType === 'opencode') {
+    for (const pattern of OPENCODE_RATE_LIMIT_PATTERNS) {
+      if (pattern.test(data)) {
+        return {
+          provider: 'opencode',
+          message: 'Opencode rate limit reached',
+        };
+      }
+    }
+  }
+
   return null;
 }
 
@@ -503,7 +545,7 @@ export function detectProviderRateLimit(
  */
 export function detectProviderBusyState(
   data: string,
-  providerType: 'claude' | 'gemini' | 'openai' = 'claude'
+  providerType: 'claude' | 'gemini' | 'openai' | 'opencode' = 'claude'
 ): 'busy' | 'idle' | null {
   if (providerType === 'claude') {
     return detectClaudeBusyState(data);
@@ -529,6 +571,16 @@ export function detectProviderBusyState(
     return null;
   }
 
+  if (providerType === 'opencode') {
+    if (OPENCODE_BUSY_PATTERNS.some(p => p.test(data))) {
+      return 'busy';
+    }
+    if (OPENCODE_IDLE_PATTERNS.some(p => p.test(data))) {
+      return 'idle';
+    }
+    return null;
+  }
+
   return null;
 }
 
@@ -537,7 +589,7 @@ export function detectProviderBusyState(
  */
 export function detectProviderExit(
   data: string,
-  providerType: 'claude' | 'gemini' | 'openai' = 'claude'
+  providerType: 'claude' | 'gemini' | 'openai' | 'opencode' = 'claude'
 ): boolean {
   // All providers use similar shell return detection
   if (detectProviderBusyState(data, providerType) === 'busy') {
@@ -552,7 +604,7 @@ export function detectProviderExit(
  */
 export function detectApiKeyError(
   data: string,
-  providerType: 'gemini' | 'openai'
+  providerType: 'gemini' | 'openai' | 'opencode'
 ): boolean {
   if (providerType === 'gemini') {
     return /API key not valid|Invalid API key|INVALID_ARGUMENT.*key/i.test(data);
@@ -560,6 +612,10 @@ export function detectApiKeyError(
 
   if (providerType === 'openai') {
     return /Invalid API key|Incorrect API key|API key.*invalid/i.test(data);
+  }
+
+  if (providerType === 'opencode') {
+    return /Invalid API key|API key.*invalid|authentication failed/i.test(data);
   }
 
   return false;

@@ -101,7 +101,7 @@ export function createProviderOutputHandler(
   }
 ) {
   let lastBusyState: 'busy' | 'idle' | null = null;
-  const providerTypeStr = providerType as 'claude' | 'gemini' | 'openai';
+  const providerTypeStr = providerType as 'claude' | 'gemini' | 'openai' | 'opencode';
 
   return (data: string) => {
     // Check for rate limits
@@ -126,9 +126,9 @@ export function createProviderOutputHandler(
       }
     }
 
-    // Check for API key errors (Gemini/OpenAI only)
+    // Check for API key errors (Gemini/OpenAI/Opencode only)
     if (providerType !== PT.CLAUDE) {
-      if (detectApiKeyError(data, providerTypeStr as 'gemini' | 'openai')) {
+      if (detectApiKeyError(data, providerTypeStr as 'gemini' | 'openai' | 'opencode')) {
         if (callbacks.onApiKeyError) {
           callbacks.onApiKeyError();
         }
@@ -168,6 +168,13 @@ export function getProviderCapabilitiesSummary(providerType: ProviderType): {
         supportsMcp: false, // Via MCP Bridge
         authMethod: 'api_key',
       };
+    case PT.OPENCODE:
+      return {
+        supportsSessionResume: false,
+        supportsExtendedThinking: false,
+        supportsMcp: true, // Via Models.dev bridge
+        authMethod: 'oauth',
+      };
     default:
       return {
         supportsSessionResume: false,
@@ -189,6 +196,8 @@ export function getDefaultModel(providerType: ProviderType): string {
       return 'gemini-2.0-flash';
     case PT.OPENAI:
       return 'gpt-4o';
+    case PT.OPENCODE:
+      return 'claude-sonnet-4';
     default:
       return '';
   }
@@ -218,6 +227,17 @@ export function getAvailableModels(providerType: ProviderType): string[] {
         'gpt-4o-mini',
         'o1',
         'o1-mini',
+        'o3-mini',
+      ];
+    case PT.OPENCODE:
+      return [
+        'claude-sonnet-4',
+        'claude-opus-4',
+        'gpt-4o',
+        'gpt-4o-mini',
+        'gemini-2.0-flash',
+        'gemini-1.5-pro',
+        'o1',
         'o3-mini',
       ];
     default:
