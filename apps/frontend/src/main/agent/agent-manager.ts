@@ -167,6 +167,11 @@ export class AgentManager extends EventEmitter {
       }
     }
 
+    // Provider selection for multi-provider support (claude, gemini, openai)
+    if (metadata?.provider && metadata.provider !== 'claude') {
+      args.push('--provider', metadata.provider);
+    }
+
     // Workspace mode: --direct skips worktree isolation (default is isolated for safety)
     if (metadata?.useWorktree === false) {
       args.push('--direct');

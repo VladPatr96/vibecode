@@ -65,7 +65,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   error: null,
 
   // Global Provider Settings Default
-  globalProviderSettings: { defaultProvider: 'claude' },
+  globalProviderSettings: {
+    defaultProvider: 'claude',
+    phaseProviders: {
+      spec: 'claude',
+      planning: 'claude',
+      coding: 'claude',
+      qa: 'claude'
+    }
+  },
 
   // API Profile state
   profiles: [],
@@ -110,7 +118,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       return projectSettings.defaultProvider;
     }
 
-    // 3. Global phase setting & 4. Global default provider
+    // 3. Global phase setting
+    if (globalProviderSettings?.phaseProviders?.[phase]) {
+      return globalProviderSettings.phaseProviders[phase];
+    }
+
+    // 4. Global default provider
     if (globalProviderSettings?.defaultProvider) {
       return globalProviderSettings.defaultProvider;
     }

@@ -30,7 +30,8 @@ import {
   Server,
   Globe,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Key
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -1139,25 +1140,118 @@ export function AccountSettings({ settings, onSettingsChange, isOpen }: AccountS
           <TabsContent value="gemini">
             <div className="rounded-lg bg-muted/30 border border-border p-4">
               <p className="text-sm text-muted-foreground mb-4">
-                Gemini CLI authenticates via Google OAuth. Click the button below to
-                open a terminal and run the authentication command.
+                Gemini can authenticate via API key or Google OAuth. Choose your preferred method.
               </p>
 
               <div className="space-y-4">
+                {/* Gemini API Key Input */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/10 text-blue-500">
+                      <Key className="h-3 w-3" />
+                    </div>
+                    <span className="text-sm font-medium">Option 1: API Key</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="gemini-api-key"
+                        type={showGeminiApiKey ? 'text' : 'password'}
+                        value={geminiApiKey}
+                        onChange={(e) => setGeminiApiKey(e.target.value)}
+                        placeholder="AIza..."
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                        onClick={() => setShowGeminiApiKey(!showGeminiApiKey)}
+                      >
+                        {showGeminiApiKey ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <Button
+                      onClick={async () => {
+                        setIsSavingGemini(true);
+                        try {
+                          await window.electronAPI.setEnvVariable?.('GEMINI_API_KEY', geminiApiKey);
+                          setGeminiConnected(true);
+                          localStorage.setItem('gemini-connected', 'true');
+                          toast({
+                            title: 'Gemini API key saved',
+                            description: 'Your Gemini CLI is now configured.',
+                          });
+                        } catch (err) {
+                          toast({
+                            title: 'Failed to save',
+                            description: String(err),
+                            variant: 'destructive',
+                          });
+                        } finally {
+                          setIsSavingGemini(false);
+                        }
+                      }}
+                      disabled={!geminiApiKey || isSavingGemini}
+                    >
+                      {isSavingGemini ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Save'
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Get your API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google AI Studio</a>
+                  </p>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-muted/30 px-2 text-muted-foreground">or</span>
+                  </div>
+                </div>
+
+                {/* Gemini OAuth */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/10 text-blue-500">
+                      <LogIn className="h-3 w-3" />
+                    </div>
+                    <span className="text-sm font-medium">Option 2: Google OAuth</span>
+                  </div>
+
                 {/* Gemini Auth Terminal */}
                 {authTerminal && authTerminal.providerType === 'gemini' ? (
-                  <div className="mb-4">
+                  <div className="space-y-3">
                     <div className="rounded-lg border border-blue-500/30 overflow-hidden" style={{ height: '320px' }}>
                       <AuthTerminal
                         terminalId={authTerminal.terminalId}
                         configDir={authTerminal.configDir}
                         profileName="Gemini CLI"
                         onClose={() => {
+                          // When user closes Gemini terminal, assume they completed auth
+                          // (Gemini doesn't have OAuth token events like Claude)
+                          setGeminiConnected(true);
+                          localStorage.setItem('gemini-connected', 'true');
                           setAuthTerminal(null);
                           setIsAuthenticatingGemini(false);
+                          toast({
+                            title: 'Gemini CLI ready',
+                            description: 'If you completed authentication, Gemini is now configured.',
+                          });
                         }}
                         onAuthSuccess={() => {
                           setGeminiConnected(true);
+                          localStorage.setItem('gemini-connected', 'true');
                           setAuthTerminal(null);
                           setIsAuthenticatingGemini(false);
                           toast({
@@ -1165,16 +1259,37 @@ export function AccountSettings({ settings, onSettingsChange, isOpen }: AccountS
                             description: 'Your Gemini CLI is now configured.',
                           });
                         }}
-                        onAuthError={(error) => {
+                        onAuthError={() => {
+                          // Don't show error for Gemini - it uses different auth flow
+                          // Just close the terminal
+                          setAuthTerminal(null);
+                          setIsAuthenticatingGemini(false);
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                      <p className="text-sm text-blue-600 dark:text-blue-400">
+                        Complete authentication in the terminal above, then click "Done"
+                      </p>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setGeminiConnected(true);
+                          localStorage.setItem('gemini-connected', 'true');
+                          // Destroy the terminal
+                          window.electronAPI.destroyTerminal(authTerminal.terminalId).catch(console.error);
                           setAuthTerminal(null);
                           setIsAuthenticatingGemini(false);
                           toast({
-                            title: 'Authentication failed',
-                            description: error,
-                            variant: 'destructive',
+                            title: 'Gemini configured',
+                            description: 'Your Gemini CLI is now ready to use.',
                           });
                         }}
-                      />
+                        className="gap-1"
+                      >
+                        <Check className="h-3 w-3" />
+                        Done
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -1193,9 +1308,9 @@ export function AccountSettings({ settings, onSettingsChange, isOpen }: AccountS
                         });
 
                         if (result.success) {
-                          // Send the gemini auth command
+                          // Send the gemini command
                           setTimeout(() => {
-                            window.electronAPI.sendTerminalInput(terminalId, 'gemini auth login\r');
+                            window.electronAPI.sendTerminalInput(terminalId, 'gemini\r');
                           }, 500);
 
                           setAuthTerminal({
@@ -1228,6 +1343,7 @@ export function AccountSettings({ settings, onSettingsChange, isOpen }: AccountS
                     Authenticate with Google OAuth
                   </Button>
                 )}
+                </div>
 
                 {geminiConnected && !authTerminal && (
                   <div className="flex items-center gap-2 text-sm text-green-600">

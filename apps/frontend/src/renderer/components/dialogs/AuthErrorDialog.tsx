@@ -3,8 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Lock, RefreshCw, ServerOff, ShieldAlert } from 'lucide-react';
-
-export type AuthErrorType = 'auth_failed' | 'token_expired' | 'rate_limit' | 'unavailable';
+import type { AuthErrorType } from '@shared/types/terminal';
 
 interface AuthErrorDialogProps {
   isOpen: boolean;

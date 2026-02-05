@@ -4,7 +4,7 @@
  */
 import type { ThinkingLevel } from './settings';
 
-export type ProviderType = 'claude' | 'gemini' | 'openai';
+export type ProviderType = 'claude' | 'gemini' | 'openai' | 'opencode';
 
 export interface PhaseProviderConfig {
   spec: ProviderType;
@@ -44,4 +44,5 @@ export interface ProjectProviderSettings {
 
 export interface GlobalProviderSettings {
   defaultProvider: ProviderType;
+  phaseProviders?: PhaseProviderConfig;
 }

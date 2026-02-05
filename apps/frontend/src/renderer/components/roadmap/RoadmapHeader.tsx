@@ -1,13 +1,22 @@
 import { useTranslation } from 'react-i18next';
-import { Target, Users, BarChart3, RefreshCw, Plus, TrendingUp } from 'lucide-react';
+import { Target, Users, BarChart3, RefreshCw, Plus, TrendingUp, Check } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel
+} from '../ui/dropdown-menu';
 import { getFeatureStats } from '../../stores/roadmap-store';
 import { ROADMAP_PRIORITY_COLORS } from '../../../shared/constants';
 import type { RoadmapHeaderProps } from './types';
 
-export function RoadmapHeader({ roadmap, competitorAnalysis, onAddFeature, onRefresh, onViewCompetitorAnalysis }: RoadmapHeaderProps) {
+export type ProviderType = 'claude' | 'gemini' | 'openai';
+
+export function RoadmapHeader({ roadmap, competitorAnalysis, onAddFeature, onRefresh, onViewCompetitorAnalysis, provider = 'claude', onProviderChange }: RoadmapHeaderProps) {
   const { t } = useTranslation('common');
   const stats = getFeatureStats(roadmap);
 
@@ -63,6 +72,50 @@ export function RoadmapHeader({ roadmap, competitorAnalysis, onAddFeature, onRef
             </TooltipTrigger>
             <TooltipContent>Regenerate Roadmap</TooltipContent>
           </Tooltip>
+
+          {/* Provider Selector */}
+          {onProviderChange && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-2 px-2"
+                  title={`Provider: ${provider}`}
+                >
+                  <span>{provider === 'claude' ? '🟠' : provider === 'gemini' ? '🔵' : '🟢'}</span>
+                  <span className="text-xs capitalize">{provider}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>AI Provider</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => onProviderChange('claude')}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  <span>🟠</span>
+                  <span className="flex-1">Claude</span>
+                  {provider === 'claude' && <Check className="h-4 w-4 text-primary" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onProviderChange('gemini')}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  <span>🔵</span>
+                  <span className="flex-1">Gemini</span>
+                  {provider === 'gemini' && <Check className="h-4 w-4 text-primary" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onProviderChange('openai')}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  <span>🟢</span>
+                  <span className="flex-1">OpenAI</span>
+                  {provider === 'openai' && <Check className="h-4 w-4 text-primary" />}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 

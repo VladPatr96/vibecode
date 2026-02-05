@@ -42,6 +42,7 @@ import {
   DEFAULT_PHASE_THINKING
 } from '../../shared/constants';
 import type { PhaseModelConfig, PhaseThinkingConfig } from '../../shared/types/settings';
+import type { ProviderType } from './ui/provider-selector';
 import { useSettingsStore } from '../stores/settings-store';
 
 /**
@@ -120,6 +121,11 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDi
     task.metadata?.requireReviewBeforeCoding ?? false
   );
 
+  // Provider selection
+  const [provider, setProvider] = useState<ProviderType>(
+    (task.metadata?.provider as ProviderType) || 'claude'
+  );
+
   // Reset form when task changes or dialog opens
   useEffect(() => {
     if (open) {
@@ -160,6 +166,7 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDi
 
       setImages(task.metadata?.attachedImages || []);
       setRequireReviewBeforeCoding(task.metadata?.requireReviewBeforeCoding ?? false);
+      setProvider((task.metadata?.provider as ProviderType) || 'claude');
       setError(null);
 
       // Auto-expand classification if it has content
@@ -204,6 +211,7 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDi
       model !== (task.metadata?.model || '') ||
       thinkingLevel !== (task.metadata?.thinkingLevel || '') ||
       requireReviewBeforeCoding !== (task.metadata?.requireReviewBeforeCoding ?? false) ||
+      provider !== ((task.metadata?.provider as ProviderType) || 'claude') ||
       JSON.stringify(images) !== JSON.stringify(task.metadata?.attachedImages || []) ||
       JSON.stringify(phaseModels) !== JSON.stringify(task.metadata?.phaseModels || DEFAULT_PHASE_MODELS) ||
       JSON.stringify(phaseThinking) !== JSON.stringify(task.metadata?.phaseThinking || DEFAULT_PHASE_THINKING);
@@ -229,9 +237,9 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDi
       metadataUpdates.phaseModels = phaseModels;
       metadataUpdates.phaseThinking = phaseThinking;
     }
-    // Always set attachedImages to persist removal when all images are deleted
     metadataUpdates.attachedImages = images.length > 0 ? images : [];
     metadataUpdates.requireReviewBeforeCoding = requireReviewBeforeCoding;
+    if (provider && provider !== 'claude') metadataUpdates.provider = provider;
 
     const success = await persistUpdateTask(task.id, {
       title: trimmedTitle,
@@ -314,6 +322,8 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDi
         disabled={isSaving}
         error={error}
         onError={setError}
+        provider={provider}
+        onProviderChange={setProvider}
         onFileReferenceDrop={handleFileReferenceDrop}
         idPrefix="edit"
       />

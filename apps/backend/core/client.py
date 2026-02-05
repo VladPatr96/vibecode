@@ -449,9 +449,105 @@ def create_client(
     max_thinking_tokens: int | None = None,
     output_format: dict | None = None,
     agents: dict | None = None,
+    provider: str = "claude",
+) -> Any:
+    """
+    Create an AI client for the specified provider.
+
+    This is the main entry point for creating clients. It dispatches to
+    provider-specific factory functions.
+
+    Args:
+        project_dir: Root directory for the project
+        spec_dir: Directory containing the spec
+        model: Model to use (provider-specific ID)
+        agent_type: Agent type identifier
+        max_thinking_tokens: Token budget for extended thinking (Claude only)
+        output_format: Optional structured output format
+        agents: Optional subagent definitions
+        provider: Provider identifier (claude, gemini, openai, opencode)
+
+    Returns:
+        Configured client instance
+    """
+    if provider == "claude":
+        return create_claude_client(
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            model=model,
+            agent_type=agent_type,
+            max_thinking_tokens=max_thinking_tokens,
+            output_format=output_format,
+            agents=agents,
+        )
+    elif provider == "gemini":
+        try:
+            from core.providers.gemini.sdk_provider import create_gemini_client
+            return create_gemini_client(
+                project_dir=project_dir,
+                spec_dir=spec_dir,
+                model=model,
+                agent_type=agent_type,
+                output_format=output_format,
+            )
+        except ImportError:
+            raise NotImplementedError("Gemini provider backend not implemented yet")
+    elif provider == "openai":
+        try:
+            from core.providers.openai.sdk_provider import create_openai_client
+            return create_openai_client(
+                project_dir=project_dir,
+                spec_dir=spec_dir,
+                model=model,
+                agent_type=agent_type,
+                output_format=output_format,
+            )
+        except ImportError:
+            raise NotImplementedError("OpenAI provider backend not implemented yet")
+    elif provider == "opencode":
+        # Opencode uses OpenAI-compatible client
+        try:
+            from core.providers.openai.sdk_provider import create_openai_client
+            # Ensure model is treated as opencode model if needed, or just pass through
+            return create_openai_client(
+                project_dir=project_dir,
+                spec_dir=spec_dir,
+                model=model,
+                agent_type=agent_type,
+                output_format=output_format,
+                # opencode might need base_url config injected via env or client params
+                # For now assuming standard openai client structure
+            )
+        except ImportError:
+            raise NotImplementedError("Opencode provider backend not implemented yet")
+    else:
+        # Fallback for unknown providers or aliases
+        logger.warning(f"Unknown provider '{provider}', falling back to Claude")
+        return create_claude_client(
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            model=model,
+            agent_type=agent_type,
+            max_thinking_tokens=max_thinking_tokens,
+            output_format=output_format,
+            agents=agents,
+        )
+
+
+def create_claude_client(
+    project_dir: Path,
+    spec_dir: Path,
+    model: str,
+    agent_type: str = "coder",
+    max_thinking_tokens: int | None = None,
+    output_format: dict | None = None,
+    agents: dict | None = None,
 ) -> ClaudeSDKClient:
     """
     Create a Claude Agent SDK client with multi-layered security.
+
+    This is the specific factory for Claude/Anthropic clients.
+    Use create_client() for a provider-agnostic factory.
 
     Uses AGENT_CONFIGS for phase-aware tool and MCP server configuration.
     Only starts MCP servers that the agent actually needs, reducing context

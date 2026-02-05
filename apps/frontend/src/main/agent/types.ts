@@ -52,8 +52,12 @@ export interface TaskExecutionOptions {
   useWorktree?: boolean; // If false, use --direct mode (no worktree isolation)
 }
 
+export type ProviderType = 'claude' | 'gemini' | 'openai';
+
 export interface SpecCreationMetadata {
   requireReviewBeforeCoding?: boolean;
+  // Provider selection for multi-provider support
+  provider?: ProviderType;
   // Auto profile - phase-based model and thinking configuration
   isAutoProfile?: boolean;
   phaseModels?: {

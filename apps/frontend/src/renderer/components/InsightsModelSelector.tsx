@@ -12,11 +12,14 @@ import {
 import { DEFAULT_AGENT_PROFILES, AVAILABLE_MODELS } from '../../shared/constants';
 import type { InsightsModelConfig } from '../../shared/types';
 import { CustomModelModal } from './CustomModelModal';
+import { ProviderSelector, type ProviderType } from './ui/provider-selector';
 
 interface InsightsModelSelectorProps {
   currentConfig?: InsightsModelConfig;
   onConfigChange: (config: InsightsModelConfig) => void;
   disabled?: boolean;
+  provider?: ProviderType;
+  onProviderChange?: (provider: ProviderType) => void;
 }
 
 const iconMap: Record<string, React.ElementType> = {
@@ -29,7 +32,9 @@ const iconMap: Record<string, React.ElementType> = {
 export function InsightsModelSelector({
   currentConfig,
   onConfigChange,
-  disabled
+  disabled,
+  provider = 'claude',
+  onProviderChange
 }: InsightsModelSelectorProps) {
   const [showCustomModal, setShowCustomModal] = useState(false);
 
@@ -75,6 +80,53 @@ export function InsightsModelSelector({
 
   return (
     <>
+      {/* Provider Selector */}
+      {onProviderChange && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-2 px-2"
+              disabled={disabled}
+              title={`Provider: ${provider}`}
+            >
+              <span>{provider === 'claude' ? '🟠' : provider === 'gemini' ? '🔵' : '🟢'}</span>
+              <span className="hidden text-xs text-muted-foreground sm:inline capitalize">
+                {provider}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel>AI Provider</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => onProviderChange('claude')}
+              className="flex cursor-pointer items-center gap-2"
+            >
+              <span>🟠</span>
+              <span className="flex-1">Claude</span>
+              {provider === 'claude' && <Check className="h-4 w-4 text-primary" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onProviderChange('gemini')}
+              className="flex cursor-pointer items-center gap-2"
+            >
+              <span>🔵</span>
+              <span className="flex-1">Gemini</span>
+              {provider === 'gemini' && <Check className="h-4 w-4 text-primary" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onProviderChange('openai')}
+              className="flex cursor-pointer items-center gap-2"
+            >
+              <span>🟢</span>
+              <span className="flex-1">OpenAI</span>
+              {provider === 'openai' && <Check className="h-4 w-4 text-primary" />}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button

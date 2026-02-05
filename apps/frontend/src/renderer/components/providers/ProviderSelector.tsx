@@ -6,7 +6,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 // Provider types matching backend
-export type ProviderType = 'claude' | 'gemini' | 'openai';
+export type ProviderType = 'claude' | 'gemini' | 'openai' | 'opencode';
 
 export interface ProviderProfile {
   id: string;
@@ -19,12 +19,14 @@ const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   claude: 'Claude Code',
   gemini: 'Gemini CLI',
   openai: 'OpenAI Codex',
+  opencode: 'OpenCode',
 };
 
 const PROVIDER_ICONS: Record<ProviderType, string> = {
   claude: '🟠',
   gemini: '🔵',
   openai: '🟢',
+  opencode: '🟣',
 };
 
 interface ProviderSelectorProps {

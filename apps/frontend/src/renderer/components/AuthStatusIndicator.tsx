@@ -14,7 +14,7 @@
  */
 
 import { useMemo, useState, useEffect } from 'react';
-import { AlertTriangle, Key, Lock, Shield, Server, Fingerprint, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Key, Lock, Shield, Server, Fingerprint, ExternalLink, Sparkles } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -27,6 +27,14 @@ import { useClaudeProfileStore } from '../stores/claude-profile-store';
 import { detectProvider, getProviderLabel, getProviderBadgeColor, type ApiProvider } from '../../shared/utils/provider-detection';
 import { formatTimeRemaining, localizeUsageWindowLabel, hasHardcodedText } from '../../shared/utils/format-time';
 import type { ClaudeUsageSnapshot } from '../../shared/types/agent';
+
+// Provider types for multi-provider support
+type ProviderStatus = {
+  type: 'gemini' | 'openai';
+  connected: boolean;
+  name: string;
+  identifier?: string;
+};
 
 /**
  * Type-safe mapping from ApiProvider to translation keys
@@ -62,6 +70,36 @@ export function AuthStatusIndicator() {
   // Track usage data for warning badge
   const [usage, setUsage] = useState<ClaudeUsageSnapshot | null>(null);
   const [isLoadingUsage, setIsLoadingUsage] = useState(true);
+
+  // Track Gemini/OpenAI connection status
+  const [geminiConnected, setGeminiConnected] = useState(false);
+  const [openaiConnected, setOpenaiConnected] = useState(false);
+
+  // Check for Gemini/OpenAI configuration on mount
+  useEffect(() => {
+    // Check if Gemini CLI is available
+    window.electronAPI.getCliToolsInfo?.().then((result) => {
+      if (result.success && result.data) {
+        // Check for gemini CLI tool
+        const geminiInfo = (result.data as Record<string, { found: boolean }>)['gemini'];
+        if (geminiInfo?.found) {
+          setGeminiConnected(true);
+        }
+      }
+    }).catch(() => {
+      // Ignore errors
+    });
+
+    // Also check localStorage for saved state
+    const savedGeminiState = localStorage.getItem('gemini-connected');
+    if (savedGeminiState === 'true') {
+      setGeminiConnected(true);
+    }
+    const savedOpenaiState = localStorage.getItem('openai-connected');
+    if (savedOpenaiState === 'true') {
+      setOpenaiConnected(true);
+    }
+  }, []);
 
   // Listen for usage updates
   useEffect(() => {
@@ -325,6 +363,97 @@ export function AuthStatusIndicator() {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      {/* Gemini Provider Badge (shown when connected) */}
+      {geminiConnected && (
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-all hover:opacity-80 bg-blue-500/10 text-blue-500 border-blue-500/20 hover:bg-blue-500/15"
+                aria-label="Gemini AI Pro"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span className="text-xs font-semibold">Gemini</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs max-w-xs p-0">
+              <div className="p-3 space-y-3">
+                {/* Header section */}
+                <div className="flex items-center justify-between pb-2 border-b">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span className="font-semibold text-xs">Gemini AI</span>
+                  </div>
+                  <div className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/15 text-blue-500">
+                    Connected
+                  </div>
+                </div>
+
+                {/* Provider info */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Server className="h-3.5 w-3.5" />
+                    <span className="font-medium text-[11px]">{t('common:usage.provider')}</span>
+                  </div>
+                  <span className="font-semibold text-xs">Google AI</span>
+                </div>
+
+                {/* Subscription label */}
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Sparkles className="h-3 w-3" />
+                    <span className="text-[10px]">{t('common:usage.subscription')}</span>
+                  </div>
+                  <span className="font-medium text-[10px]">Google AI Pro</span>
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
+      {/* OpenAI Provider Badge (shown when connected) */}
+      {openaiConnected && (
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-all hover:opacity-80 bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/15"
+                aria-label="OpenAI"
+              >
+                <Key className="h-3.5 w-3.5" />
+                <span className="text-xs font-semibold">OpenAI</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs max-w-xs p-0">
+              <div className="p-3 space-y-3">
+                {/* Header section */}
+                <div className="flex items-center justify-between pb-2 border-b">
+                  <div className="flex items-center gap-1.5">
+                    <Key className="h-3.5 w-3.5" />
+                    <span className="font-semibold text-xs">OpenAI</span>
+                  </div>
+                  <div className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-500/15 text-green-500">
+                    Connected
+                  </div>
+                </div>
+
+                {/* Provider info */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Server className="h-3.5 w-3.5" />
+                    <span className="font-medium text-[11px]">{t('common:usage.provider')}</span>
+                  </div>
+                  <span className="font-semibold text-xs">OpenAI</span>
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
 
       {/* 5 Hour Usage Badge (shown when session usage >= 90%) */}
       {usage && !isLoadingUsage && usage.sessionPercent >= 90 && (

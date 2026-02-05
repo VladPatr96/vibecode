@@ -59,6 +59,7 @@ class AgentRunner:
         interactive: bool = False,
         thinking_budget: int | None = None,
         prior_phase_summaries: str | None = None,
+        provider: str | None = None,
     ) -> tuple[bool, str]:
         """Run an agent with the given prompt.
 
@@ -68,6 +69,7 @@ class AgentRunner:
             interactive: Whether to run in interactive mode
             thinking_budget: Token budget for extended thinking (None = disabled, Claude only)
             prior_phase_summaries: Summaries from previous phases for context
+            provider: Provider override for this specific agent run
 
         Returns:
             Tuple of (success, response_text)
@@ -79,7 +81,7 @@ class AgentRunner:
             prompt_file=prompt_file,
             spec_dir=str(self.spec_dir),
             model=self.model,
-            provider=self.provider or "claude",
+            provider=provider or self.provider or "claude",
             interactive=interactive,
         )
 
@@ -122,7 +124,9 @@ class AgentRunner:
         from agents.task_config import get_task_provider
         from core.providers.types import ProviderType
 
-        provider_type = get_task_provider(self.spec_dir, self.provider)
+        # Use passed provider override or instance default
+        effective_provider = provider or self.provider
+        provider_type = get_task_provider(self.spec_dir, effective_provider)
 
         # Create client with thinking budget (Claude only)
         effective_thinking = thinking_budget if provider_type == ProviderType.CLAUDE else None

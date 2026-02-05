@@ -19,6 +19,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Button } from '../ui/button';
 import { AgentProfileSelector } from '../AgentProfileSelector';
 import { ClassificationFields } from './ClassificationFields';
+import { ProviderSelector, type ProviderType } from '../ui/provider-selector';
 import { useImageUpload, type FileReferenceData } from './useImageUpload';
 import { createThumbnail } from '../ImageUpload';
 import { ScreenshotCapture } from '../ScreenshotCapture';
@@ -91,6 +92,10 @@ interface TaskFormFieldsProps {
   error?: string | null;
   onError?: (error: string | null) => void;
 
+  // Provider selection
+  provider?: ProviderType;
+  onProviderChange?: (provider: ProviderType) => void;
+
   // ID prefix for accessibility
   idPrefix?: string;
 
@@ -138,6 +143,8 @@ export function TaskFormFields({
   disabled = false,
   error,
   onError,
+  provider = 'claude',
+  onProviderChange,
   idPrefix = '',
   children,
   onFileReferenceDrop
@@ -472,6 +479,16 @@ export function TaskFormFields({
           onPhaseThinkingChange={onPhaseThinkingChange}
           disabled={disabled}
         />
+
+        {/* AI Provider Selection */}
+        {onProviderChange && (
+          <ProviderSelector
+            value={provider}
+            onValueChange={onProviderChange}
+            disabled={disabled}
+            showCapabilities={true}
+          />
+        )}
 
         {/* Classification Toggle */}
         <button
