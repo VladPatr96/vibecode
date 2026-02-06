@@ -75,28 +75,15 @@ export const memoryTypeColors: Record<string, string> = {
   pr_gotcha: 'bg-red-500/10 text-red-400 border-red-500/30'
 };
 
-// Memory type labels for display
-export const memoryTypeLabels: Record<string, string> = {
-  session_insight: 'Session Insight',
-  codebase_discovery: 'Codebase Discovery',
-  codebase_map: 'Codebase Map',
-  pattern: 'Pattern',
-  gotcha: 'Gotcha',
-  task_outcome: 'Task Outcome',
-  qa_result: 'QA Result',
-  historical_context: 'Historical Context',
-  pr_review: 'PR Review',
-  pr_finding: 'PR Finding',
-  pr_pattern: 'PR Pattern',
-  pr_gotcha: 'PR Gotcha'
-};
+// Filter category keys (labels resolved via i18n: context:memory.filters.*)
+export const MEMORY_FILTER_KEYS = ['all', 'pr', 'sessions', 'codebase', 'patterns', 'gotchas'] as const;
 
-// Filter categories for grouping memory types
-export const memoryFilterCategories = {
-  all: { label: 'All', types: [] as string[] },
-  pr: { label: 'PR Reviews', types: ['pr_review', 'pr_finding', 'pr_pattern', 'pr_gotcha'] },
-  sessions: { label: 'Sessions', types: ['session_insight', 'task_outcome', 'qa_result', 'historical_context'] },
-  codebase: { label: 'Codebase', types: ['codebase_discovery', 'codebase_map'] },
-  patterns: { label: 'Patterns', types: ['pattern', 'pr_pattern'] },
-  gotchas: { label: 'Gotchas', types: ['gotcha', 'pr_gotcha'] }
+// Filter categories for grouping memory types (types only, labels via i18n)
+export const memoryFilterTypes: Record<string, string[]> = {
+  all: [],
+  pr: ['pr_review', 'pr_finding', 'pr_pattern', 'pr_gotcha'],
+  sessions: ['session_insight', 'task_outcome', 'qa_result', 'historical_context'],
+  codebase: ['codebase_discovery', 'codebase_map'],
+  patterns: ['pattern', 'pr_pattern'],
+  gotchas: ['gotcha', 'pr_gotcha']
 };

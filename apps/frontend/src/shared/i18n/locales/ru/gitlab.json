@@ -1,0 +1,208 @@
+{
+  "title": "GitLab Issues",
+  "states": {
+    "opened": "Открыто",
+    "closed": "Закрыто"
+  },
+  "complexity": {
+    "simple": "Простая",
+    "standard": "Стандартная",
+    "complex": "Сложная"
+  },
+  "header": {
+    "open": "открыто",
+    "searchPlaceholder": "Поиск задач..."
+  },
+  "filters": {
+    "opened": "Открытые",
+    "closed": "Закрытые",
+    "all": "Все"
+  },
+  "empty": {
+    "noMatch": "Задачи не найдены по вашему запросу",
+    "selectIssue": "Выберите задачу для просмотра деталей"
+  },
+  "notConnected": {
+    "title": "GitLab не подключён",
+    "description": "Настройте токен GitLab и проект в настройках проекта для синхронизации задач.",
+    "openSettings": "Открыть настройки"
+  },
+  "detail": {
+    "notes": "заметок",
+    "viewTask": "Просмотреть задачу",
+    "createTask": "Создать задачу",
+    "taskLinked": "Задача связана",
+    "taskId": "ID задачи",
+    "description": "Описание",
+    "noDescription": "Описание не предоставлено.",
+    "assignees": "Исполнители",
+    "milestone": "Веха"
+  },
+  "investigation": {
+    "title": "Создать задачу из Issue",
+    "issuePrefix": "Issue",
+    "description": "Создайте задачу из этого GitLab issue. Задача будет добавлена на канбан-доску в колонку Бэклог.",
+    "selectNotes": "Выберите заметки для включения",
+    "deselectAll": "Снять выбор со всех",
+    "selectAll": "Выбрать все",
+    "willInclude": "Задача будет включать:",
+    "includeTitle": "Заголовок и описание issue",
+    "includeLink": "Ссылку на GitLab issue",
+    "includeLabels": "Метки и метаданные из issue",
+    "noNotes": "Нет заметок (у этого issue нет заметок)",
+    "failedToLoadNotes": "Не удалось загрузить заметки",
+    "taskCreated": "Задача создана! Просмотрите её на канбан-доске.",
+    "creating": "Создание...",
+    "cancel": "Отмена",
+    "done": "Готово",
+    "close": "Закрыть"
+  },
+  "settings": {
+    "enableIssues": "Включить GitLab Issues",
+    "enableIssuesDescription": "Синхронизировать задачи из GitLab и создавать задачи автоматически",
+    "instance": "Инстанс GitLab",
+    "instanceDescription": "Используйте https://gitlab.com или URL вашего self-hosted инстанса",
+    "connectedVia": "Подключено через GitLab CLI",
+    "authenticatedAs": "Аутентифицирован как",
+    "useDifferentToken": "Использовать другой токен",
+    "authentication": "Аутентификация GitLab",
+    "useManualToken": "Использовать ручной токен",
+    "authenticating": "Аутентификация через glab CLI...",
+    "browserWindow": "Должно открыться окно браузера для входа.",
+    "personalAccessToken": "Personal Access Token",
+    "useOAuth": "Использовать OAuth",
+    "tokenScope": "Создайте токен со scope",
+    "scopeApi": "api",
+    "scopeFrom": "из",
+    "gitlabSettings": "Настройки GitLab",
+    "project": "Проект",
+    "enterManually": "Ввести вручную",
+    "loadingProjects": "Загрузка проектов...",
+    "selectProject": "Выберите проект...",
+    "searchProjects": "Поиск проектов...",
+    "noMatchingProjects": "Подходящих проектов не найдено",
+    "noProjectsFound": "Проекты не найдены",
+    "selected": "Выбрано",
+    "projectFormat": "Формат:",
+    "projectFormatExample": "(напр., gitlab-org/gitlab)",
+    "connectionStatus": "Статус подключения",
+    "checking": "Проверка...",
+    "connectedTo": "Подключено к",
+    "notConnected": "Не подключено",
+    "issuesAvailable": "Issues доступны",
+    "issuesAvailableDescription": "Получите доступ к GitLab Issues из боковой панели для просмотра, исследования и создания задач из issues.",
+    "defaultBranch": "Ветка по умолчанию",
+    "defaultBranchDescription": "Базовая ветка для создания рабочих деревьев задач",
+    "loadingBranches": "Загрузка веток...",
+    "autoDetect": "Автоопределение (main/master)",
+    "searchBranches": "Поиск веток...",
+    "noMatchingBranches": "Подходящих веток не найдено",
+    "noBranchesFound": "Ветки не найдены",
+    "branchFromNote": "Все новые задачи будут ответвлены от",
+    "autoSyncOnLoad": "Автосинхронизация при загрузке",
+    "autoSyncDescription": "Автоматически загружать issues при загрузке проекта",
+    "cli": {
+      "required": "Требуется GitLab CLI",
+      "notInstalled": "GitLab CLI (glab) требуется для OAuth аутентификации. Установите его для использования опции 'Использовать OAuth'.",
+      "installButton": "Установить glab",
+      "installing": "Установка...",
+      "installSuccess": "Установка запущена в терминале. Завершите её и нажмите Обновить.",
+      "refresh": "Обновить",
+      "learnMore": "Узнать больше",
+      "installed": "GitLab CLI установлен:"
+    }
+  },
+  "mergeRequests": {
+    "title": "GitLab Merge Requests",
+    "newMR": "Новый Merge Request",
+    "selectMR": "Выберите merge request для просмотра деталей",
+    "states": {
+      "opened": "Открыт",
+      "closed": "Закрыт",
+      "merged": "Слит",
+      "locked": "Заблокирован"
+    },
+    "filters": {
+      "opened": "Открытые",
+      "closed": "Закрытые",
+      "merged": "Слитые",
+      "all": "Все"
+    }
+  },
+  "mrReview": {
+    "runReview": "Запустить AI-проверку",
+    "reviewing": "Проверка...",
+    "followupReview": "Повторная проверка",
+    "newCommits": "новый коммит",
+    "newCommitsPlural": "новых коммитов",
+    "cancel": "Отмена",
+    "postFindings": "Опубликовать находки",
+    "posting": "Публикация...",
+    "postedTo": "Опубликовано в GitLab",
+    "approve": "Одобрить",
+    "approving": "Одобрение...",
+    "merge": "Слить MR",
+    "merging": "Слияние...",
+    "aiReviewResult": "Результат AI-проверки",
+    "followupReviewResult": "Повторная проверка",
+    "description": "Описание",
+    "noDescription": "Описание не предоставлено.",
+    "labels": "Метки",
+    "status": {
+      "notReviewed": "Не проверено",
+      "notReviewedDesc": "Запустите AI-проверку для анализа этого MR",
+      "reviewComplete": "Проверка завершена",
+      "reviewCompleteDesc": "находок обнаружено. Выберите и опубликуйте в GitLab.",
+      "waitingForChanges": "Ожидание изменений",
+      "waitingForChangesDesc": "находок опубликовано. Ожидание исправлений от контрибьютора.",
+      "readyToMerge": "Готов к слиянию",
+      "readyToMergeDesc": "Блокирующих проблем не найдено. Этот MR можно слить.",
+      "needsAttention": "Требует внимания",
+      "needsAttentionDesc": "находок должны быть опубликованы в GitLab.",
+      "readyForFollowup": "Готов к повторной проверке",
+      "readyForFollowupDesc": "с момента проверки. Запустите повторную проверку.",
+      "blockingIssues": "Блокирующие проблемы",
+      "blockingIssuesDesc": "блокирующих проблем ещё открыто."
+    },
+    "overallStatus": {
+      "approve": "Одобрить",
+      "requestChanges": "Запрошены изменения",
+      "comment": "Комментарий"
+    },
+    "resolution": {
+      "resolved": "решено",
+      "stillOpen": "ещё открыто",
+      "newIssue": "новая проблема",
+      "newIssues": "новых проблем"
+    }
+  },
+  "findings": {
+    "summary": "выбрано",
+    "selectCriticalHigh": "Выбрать блокирующие/обязательные",
+    "selectAll": "Выбрать все",
+    "clear": "Очистить",
+    "noIssues": "Проблем не найдено! Код выглядит хорошо.",
+    "suggestedFix": "Предлагаемое исправление:",
+    "posted": "Опубликовано",
+    "severity": {
+      "critical": "Блокирующий",
+      "criticalDesc": "Необходимо исправить",
+      "high": "Обязательный",
+      "highDesc": "Следует исправить",
+      "medium": "Рекомендуемый",
+      "mediumDesc": "Улучшит качество",
+      "low": "Предложение",
+      "lowDesc": "Рассмотреть"
+    },
+    "category": {
+      "security": "Безопасность",
+      "quality": "Качество",
+      "style": "Стиль",
+      "test": "Тест",
+      "docs": "Документация",
+      "pattern": "Паттерн",
+      "performance": "Производительность",
+      "logic": "Логика"
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "title": "Roadmap",
+  "header": {
+    "addFeature": "Add Feature",
+    "addFeatureTooltip": "Add a new feature to the roadmap",
+    "regenerate": "Regenerate Roadmap",
+    "competitorAnalysis": "Competitor Analysis",
+    "clickToViewAnalysis": "Click to view detailed analysis",
+    "analyzedCompetitors": "Analyzed {{count}} competitors with {{painPoints}} pain points identified",
+    "target": "Target",
+    "morePersonas": "+{{count}} more personas",
+    "secondaryPersonas": "Secondary Personas",
+    "features": "features",
+    "phases": "phases"
+  },
+  "emptyState": {
+    "title": "No Roadmap Yet",
+    "description": "Generate an AI-powered roadmap that understands your project's target audience and creates a strategic feature plan.",
+    "generate": "Generate Roadmap"
+  },
+  "feature": {
+    "goToTask": "Go to Task",
+    "build": "Build",
+    "competitorInsight": "Competitor Insight",
+    "competitorInsightTooltip": "This feature addresses competitor pain points",
+    "impact": "impact"
+  },
+  "priority": {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "complexity": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High"
+  },
+  "impact": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High"
+  },
+  "status": {
+    "planned": "Planned",
+    "inProgress": "In Progress",
+    "done": "Done"
+  },
+  "phase": {
+    "foundation": "Foundation",
+    "growth": "Growth",
+    "scale": "Scale",
+    "optimization": "Optimization"
+  },
+  "tabs": {
+    "timeline": "Timeline",
+    "kanban": "Kanban",
+    "list": "List"
+  },
+  "detail": {
+    "rationale": "Rationale",
+    "dependencies": "Dependencies",
+    "noDependencies": "No dependencies",
+    "linkedTask": "Linked Task",
+    "noLinkedTask": "No task linked",
+    "convertToTask": "Convert to Task",
+    "delete": "Delete Feature"
+  },
+  "generation": {
+    "generating": "Generating roadmap...",
+    "analyzing": "Analyzing project...",
+    "planning": "Planning features...",
+    "complete": "Complete"
+  },
+  "errors": {
+    "generateFailed": "Failed to generate roadmap",
+    "loadFailed": "Failed to load roadmap",
+    "saveFailed": "Failed to save changes"
+  }
+}

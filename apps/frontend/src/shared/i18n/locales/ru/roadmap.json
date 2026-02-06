@@ -1,0 +1,80 @@
+{
+  "title": "Дорожная карта",
+  "header": {
+    "addFeature": "Добавить функцию",
+    "addFeatureTooltip": "Добавить новую функцию в дорожную карту",
+    "regenerate": "Перегенерировать дорожную карту",
+    "competitorAnalysis": "Анализ конкурентов",
+    "clickToViewAnalysis": "Нажмите для просмотра детального анализа",
+    "analyzedCompetitors": "Проанализировано {{count}} конкурентов с {{painPoints}} выявленными проблемами",
+    "target": "Цель",
+    "morePersonas": "+{{count}} ещё персон",
+    "secondaryPersonas": "Вторичные персоны",
+    "features": "функций",
+    "phases": "фаз"
+  },
+  "emptyState": {
+    "title": "Дорожной карты ещё нет",
+    "description": "Сгенерируйте дорожную карту на основе AI, которая понимает целевую аудиторию вашего проекта и создаёт стратегический план функций.",
+    "generate": "Сгенерировать дорожную карту"
+  },
+  "feature": {
+    "goToTask": "Перейти к задаче",
+    "build": "Собрать",
+    "competitorInsight": "Инсайт конкурентов",
+    "competitorInsightTooltip": "Эта функция решает проблемы конкурентов",
+    "impact": "влияние"
+  },
+  "priority": {
+    "critical": "Критический",
+    "high": "Высокий",
+    "medium": "Средний",
+    "low": "Низкий"
+  },
+  "complexity": {
+    "low": "Низкая",
+    "medium": "Средняя",
+    "high": "Высокая"
+  },
+  "impact": {
+    "low": "Низкое",
+    "medium": "Среднее",
+    "high": "Высокое"
+  },
+  "status": {
+    "planned": "Запланировано",
+    "inProgress": "В работе",
+    "done": "Готово"
+  },
+  "phase": {
+    "foundation": "Основа",
+    "growth": "Рост",
+    "scale": "Масштабирование",
+    "optimization": "Оптимизация"
+  },
+  "tabs": {
+    "timeline": "Временная шкала",
+    "kanban": "Канбан",
+    "list": "Список"
+  },
+  "detail": {
+    "rationale": "Обоснование",
+    "dependencies": "Зависимости",
+    "noDependencies": "Нет зависимостей",
+    "linkedTask": "Связанная задача",
+    "noLinkedTask": "Задача не связана",
+    "convertToTask": "Преобразовать в задачу",
+    "delete": "Удалить функцию"
+  },
+  "generation": {
+    "generating": "Генерация дорожной карты...",
+    "analyzing": "Анализ проекта...",
+    "planning": "Планирование функций...",
+    "complete": "Завершено"
+  },
+  "errors": {
+    "generateFailed": "Не удалось сгенерировать дорожную карту",
+    "loadFailed": "Не удалось загрузить дорожную карту",
+    "saveFailed": "Не удалось сохранить изменения"
+  }
+}

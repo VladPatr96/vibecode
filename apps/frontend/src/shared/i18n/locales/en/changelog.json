@@ -1,0 +1,154 @@
+{
+  "title": "Changelog Generator",
+  "noProject": {
+    "title": "No Project Selected",
+    "description": "Select a project from the sidebar to generate changelogs."
+  },
+  "steps": {
+    "step1": "Step 1: Select completed tasks to include",
+    "step2": "Step 2: Configure and generate changelog",
+    "step3": "Step 3: Release and archive tasks",
+    "select": "Select",
+    "generate": "Generate",
+    "release": "Release"
+  },
+  "buttons": {
+    "refresh": "Refresh",
+    "backToSelection": "Back to Selection",
+    "continue": "Continue",
+    "generate": "Generate Changelog",
+    "generating": "Generating...",
+    "loadCommits": "Load Commits",
+    "loading": "Loading...",
+    "selectAll": "Select All",
+    "clear": "Clear",
+    "save": "Save",
+    "copy": "Copy",
+    "advancedOptions": "Advanced Options"
+  },
+  "source": {
+    "title": "Changelog Source",
+    "tasks": "Completed Tasks",
+    "tasksDescription": "Generate from Auto Claude tasks marked as done",
+    "gitHistory": "Git History",
+    "gitHistoryDescription": "Generate from Git commit history",
+    "branchDiff": "Branch Diff",
+    "branchDiffDescription": "Generate from differences between branches"
+  },
+  "gitHistory": {
+    "title": "Git History Options",
+    "historyType": "History Type",
+    "sinceVersion": "Since Version",
+    "recentCommits": "Recent Commits",
+    "sinceDate": "Since Date",
+    "tagRange": "Tag Range",
+    "numberOfCommits": "Number of Commits",
+    "fromTag": "From Tag",
+    "toTag": "To Tag (optional)",
+    "headLatest": "HEAD (latest)",
+    "selectTag": "Select tag...",
+    "selectVersion": "Select version...",
+    "lastVersion": "Last Version",
+    "allCommitsSinceVersion": "All commits since this version will be included",
+    "includeMergeCommits": "Include merge commits"
+  },
+  "branchDiff": {
+    "title": "Branch Comparison",
+    "baseBranch": "Base Branch",
+    "selectBaseBranch": "Select base branch...",
+    "baseBranchHint": "The branch you're merging into",
+    "compareBranch": "Compare Branch",
+    "selectCompareBranch": "Select compare branch...",
+    "compareBranchHint": "The branch with your changes",
+    "branchesMustBeDifferent": "Branches must be different",
+    "default": "default",
+    "current": "current"
+  },
+  "tasks": {
+    "selected": "{{selected}} of {{total}} tasks selected",
+    "noCompleted": "No Completed Tasks",
+    "noCompletedDescription": "Complete tasks in the Kanban board and mark them as \"Done\" to include them in your changelog."
+  },
+  "commits": {
+    "found": "{{count}} commit found",
+    "found_plural": "{{count}} commits found",
+    "loadingCommits": "Loading commits...",
+    "noCommits": "No Commits Found",
+    "noCommitsGitHistory": "Configure the history options and click \"Load Commits\" to preview.",
+    "noCommitsBranchDiff": "Select both branches and click \"Load Commits\" to see the changes."
+  },
+  "releaseInfo": {
+    "title": "Release Info",
+    "version": "Version",
+    "date": "Date",
+    "previous": "Previous"
+  },
+  "outputStyle": {
+    "title": "Output Style",
+    "format": "Format",
+    "audience": "Audience",
+    "emojis": "Emojis"
+  },
+  "advanced": {
+    "title": "Advanced Options",
+    "customInstructions": "Custom Instructions",
+    "customInstructionsPlaceholder": "Add any special instructions for the AI...",
+    "customInstructionsHint": "Optional. Guide the AI on tone, specific details to include, etc."
+  },
+  "including": "Including {{count}} {{label}}",
+  "task": "task",
+  "tasks_plural": "tasks",
+  "commit": "commit",
+  "commits_plural": "commits",
+  "item": "item",
+  "items_plural": "items",
+  "formats": {
+    "keepAChangelog": "Keep a Changelog",
+    "keepAChangelogDesc": "Standard format with Added, Changed, Fixed categories",
+    "conventional": "Conventional",
+    "conventionalDesc": "Based on Conventional Commits (feat, fix, docs)",
+    "semantic": "Semantic",
+    "semanticDesc": "Grouped by semantic impact of changes",
+    "narrative": "Narrative",
+    "narrativeDesc": "Story-style narrative format"
+  },
+  "audiences": {
+    "developers": "Developers",
+    "developersDesc": "Technical details for developers",
+    "users": "Users",
+    "usersDesc": "User-friendly feature descriptions",
+    "stakeholders": "Stakeholders",
+    "stakeholdersDesc": "Business impact for stakeholders"
+  },
+  "emojiLevels": {
+    "none": "None",
+    "noneDesc": "Plain text without emojis",
+    "minimal": "Minimal",
+    "minimalDesc": "Category headers only",
+    "moderate": "Moderate",
+    "moderateDesc": "Headers and key items",
+    "expressive": "Expressive",
+    "expressiveDesc": "Emojis everywhere"
+  },
+  "stages": {
+    "analyzing": "Analyzing changes",
+    "generating": "Generating changelog",
+    "formatting": "Formatting output",
+    "complete": "Complete"
+  },
+  "archive": {
+    "title": "Release and Archive",
+    "createRelease": "Create GitHub Release",
+    "archiveTasks": "Archive Tasks",
+    "archiveTasksDescription": "Move selected tasks to archive after release"
+  },
+  "success": {
+    "saved": "Changelog saved",
+    "copied": "Changelog copied"
+  },
+  "errors": {
+    "generateFailed": "Failed to generate changelog",
+    "saveFailed": "Failed to save changelog",
+    "loadCommitsFailed": "Failed to load commits"
+  }
+}

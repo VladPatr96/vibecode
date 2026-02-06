@@ -1,0 +1,154 @@
+{
+  "title": "Генератор Changelog",
+  "noProject": {
+    "title": "Проект не выбран",
+    "description": "Выберите проект в боковой панели для генерации changelog."
+  },
+  "steps": {
+    "step1": "Шаг 1: Выберите завершённые задачи",
+    "step2": "Шаг 2: Настройте и сгенерируйте changelog",
+    "step3": "Шаг 3: Релиз и архивация задач",
+    "select": "Выбор",
+    "generate": "Генерация",
+    "release": "Релиз"
+  },
+  "buttons": {
+    "refresh": "Обновить",
+    "backToSelection": "Назад к выбору",
+    "continue": "Продолжить",
+    "generate": "Сгенерировать Changelog",
+    "generating": "Генерация...",
+    "loadCommits": "Загрузить коммиты",
+    "loading": "Загрузка...",
+    "selectAll": "Выбрать все",
+    "clear": "Очистить",
+    "save": "Сохранить",
+    "copy": "Копировать",
+    "advancedOptions": "Дополнительные опции"
+  },
+  "source": {
+    "title": "Источник Changelog",
+    "tasks": "Завершённые задачи",
+    "tasksDescription": "Генерировать из задач Auto Claude, помеченных как выполненные",
+    "gitHistory": "История Git",
+    "gitHistoryDescription": "Генерировать из истории коммитов Git",
+    "branchDiff": "Сравнение веток",
+    "branchDiffDescription": "Генерировать из различий между ветками"
+  },
+  "gitHistory": {
+    "title": "Опции истории Git",
+    "historyType": "Тип истории",
+    "sinceVersion": "С версии",
+    "recentCommits": "Последние коммиты",
+    "sinceDate": "С даты",
+    "tagRange": "Диапазон тегов",
+    "numberOfCommits": "Количество коммитов",
+    "fromTag": "От тега",
+    "toTag": "До тега (опционально)",
+    "headLatest": "HEAD (последний)",
+    "selectTag": "Выберите тег...",
+    "selectVersion": "Выберите версию...",
+    "lastVersion": "Последняя версия",
+    "allCommitsSinceVersion": "Все коммиты с этой версии будут включены",
+    "includeMergeCommits": "Включить merge-коммиты"
+  },
+  "branchDiff": {
+    "title": "Сравнение веток",
+    "baseBranch": "Базовая ветка",
+    "selectBaseBranch": "Выберите базовую ветку...",
+    "baseBranchHint": "Ветка, в которую сливаете",
+    "compareBranch": "Сравниваемая ветка",
+    "selectCompareBranch": "Выберите сравниваемую ветку...",
+    "compareBranchHint": "Ветка с вашими изменениями",
+    "branchesMustBeDifferent": "Ветки должны отличаться",
+    "default": "по умолчанию",
+    "current": "текущая"
+  },
+  "tasks": {
+    "selected": "{{selected}} из {{total}} задач выбрано",
+    "noCompleted": "Нет завершённых задач",
+    "noCompletedDescription": "Завершите задачи на Канбан-доске и пометьте их как \"Готово\" для включения в changelog."
+  },
+  "commits": {
+    "found": "{{count}} коммит найден",
+    "found_plural": "{{count}} коммитов найдено",
+    "loadingCommits": "Загрузка коммитов...",
+    "noCommits": "Коммиты не найдены",
+    "noCommitsGitHistory": "Настройте опции истории и нажмите \"Загрузить коммиты\" для предпросмотра.",
+    "noCommitsBranchDiff": "Выберите обе ветки и нажмите \"Загрузить коммиты\" для просмотра изменений."
+  },
+  "releaseInfo": {
+    "title": "Информация о релизе",
+    "version": "Версия",
+    "date": "Дата",
+    "previous": "Предыдущая"
+  },
+  "outputStyle": {
+    "title": "Стиль вывода",
+    "format": "Формат",
+    "audience": "Аудитория",
+    "emojis": "Эмодзи"
+  },
+  "advanced": {
+    "title": "Дополнительные опции",
+    "customInstructions": "Пользовательские инструкции",
+    "customInstructionsPlaceholder": "Добавьте специальные инструкции для AI...",
+    "customInstructionsHint": "Опционально. Укажите AI желаемый тон, детали для включения и т.д."
+  },
+  "including": "Включает {{count}} {{label}}",
+  "task": "задачу",
+  "tasks_plural": "задач",
+  "commit": "коммит",
+  "commits_plural": "коммитов",
+  "item": "элемент",
+  "items_plural": "элементов",
+  "formats": {
+    "keepAChangelog": "Keep a Changelog",
+    "keepAChangelogDesc": "Стандартный формат с категориями Added, Changed, Fixed",
+    "conventional": "Conventional",
+    "conventionalDesc": "На основе Conventional Commits (feat, fix, docs)",
+    "semantic": "Semantic",
+    "semanticDesc": "Группировка по семантическому влиянию изменений",
+    "narrative": "Narrative",
+    "narrativeDesc": "История в повествовательном стиле"
+  },
+  "audiences": {
+    "developers": "Разработчики",
+    "developersDesc": "Технические детали для разработчиков",
+    "users": "Пользователи",
+    "usersDesc": "Понятные пользователям описания функций",
+    "stakeholders": "Стейкхолдеры",
+    "stakeholdersDesc": "Бизнес-влияние для заинтересованных сторон"
+  },
+  "emojiLevels": {
+    "none": "Без эмодзи",
+    "noneDesc": "Простой текст без эмодзи",
+    "minimal": "Минимум",
+    "minimalDesc": "Только заголовки категорий",
+    "moderate": "Умеренно",
+    "moderateDesc": "Заголовки и основные пункты",
+    "expressive": "Выразительно",
+    "expressiveDesc": "Эмодзи везде"
+  },
+  "stages": {
+    "analyzing": "Анализ изменений",
+    "generating": "Генерация changelog",
+    "formatting": "Форматирование вывода",
+    "complete": "Завершено"
+  },
+  "archive": {
+    "title": "Релиз и архивация",
+    "createRelease": "Создать GitHub релиз",
+    "archiveTasks": "Архивировать задачи",
+    "archiveTasksDescription": "Переместить выбранные задачи в архив после релиза"
+  },
+  "success": {
+    "saved": "Changelog сохранён",
+    "copied": "Changelog скопирован"
+  },
+  "errors": {
+    "generateFailed": "Не удалось сгенерировать changelog",
+    "saveFailed": "Не удалось сохранить changelog",
+    "loadCommitsFailed": "Не удалось загрузить коммиты"
+  }
+}

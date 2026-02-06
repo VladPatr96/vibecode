@@ -13,6 +13,9 @@ import enGitlab from './locales/en/gitlab.json';
 import enTaskReview from './locales/en/taskReview.json';
 import enTerminal from './locales/en/terminal.json';
 import enErrors from './locales/en/errors.json';
+import enChangelog from './locales/en/changelog.json';
+import enRoadmap from './locales/en/roadmap.json';
+import enContext from './locales/en/context.json';
 
 // Import French translation resources
 import frCommon from './locales/fr/common.json';
@@ -26,6 +29,22 @@ import frGitlab from './locales/fr/gitlab.json';
 import frTaskReview from './locales/fr/taskReview.json';
 import frTerminal from './locales/fr/terminal.json';
 import frErrors from './locales/fr/errors.json';
+
+// Import Russian translation resources
+import ruCommon from './locales/ru/common.json';
+import ruNavigation from './locales/ru/navigation.json';
+import ruSettings from './locales/ru/settings.json';
+import ruTasks from './locales/ru/tasks.json';
+import ruWelcome from './locales/ru/welcome.json';
+import ruOnboarding from './locales/ru/onboarding.json';
+import ruDialogs from './locales/ru/dialogs.json';
+import ruGitlab from './locales/ru/gitlab.json';
+import ruTaskReview from './locales/ru/taskReview.json';
+import ruTerminal from './locales/ru/terminal.json';
+import ruErrors from './locales/ru/errors.json';
+import ruChangelog from './locales/ru/changelog.json';
+import ruRoadmap from './locales/ru/roadmap.json';
+import ruContext from './locales/ru/context.json';
 
 export const defaultNS = 'common';
 
@@ -41,7 +60,10 @@ export const resources = {
     gitlab: enGitlab,
     taskReview: enTaskReview,
     terminal: enTerminal,
-    errors: enErrors
+    errors: enErrors,
+    changelog: enChangelog,
+    roadmap: enRoadmap,
+    context: enContext
   },
   fr: {
     common: frCommon,
@@ -55,6 +77,22 @@ export const resources = {
     taskReview: frTaskReview,
     terminal: frTerminal,
     errors: frErrors
+  },
+  ru: {
+    common: ruCommon,
+    navigation: ruNavigation,
+    settings: ruSettings,
+    tasks: ruTasks,
+    welcome: ruWelcome,
+    onboarding: ruOnboarding,
+    dialogs: ruDialogs,
+    gitlab: ruGitlab,
+    taskReview: ruTaskReview,
+    terminal: ruTerminal,
+    errors: ruErrors,
+    changelog: ruChangelog,
+    roadmap: ruRoadmap,
+    context: ruContext
   }
 } as const;
 
@@ -65,7 +103,7 @@ i18n
     lng: 'en', // Default language (will be overridden by settings)
     fallbackLng: 'en',
     defaultNS,
-    ns: ['common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'gitlab', 'taskReview', 'terminal', 'errors'],
+    ns: ['common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'gitlab', 'taskReview', 'terminal', 'errors', 'changelog', 'roadmap', 'context'],
     interpolation: {
       escapeValue: false // React already escapes values
     },
