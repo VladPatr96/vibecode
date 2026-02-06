@@ -2,6 +2,7 @@ import { X, Sparkles, TerminalSquare, FolderGit, ExternalLink, GripVertical, Max
 import { useTranslation } from 'react-i18next';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import type { Task, TerminalWorktreeConfig } from '../../../shared/types';
+import { PROVIDER_DISPLAY_NAMES } from '../../../shared/types';
 import type { TerminalStatus } from '../../stores/terminal-store';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
@@ -42,6 +43,8 @@ interface TerminalHeaderProps {
   onToggleExpand?: () => void;
   /** Whether this terminal has a pending Claude resume (deferred until tab activated) */
   pendingClaudeResume?: boolean;
+  /** Provider type for this terminal (claude, gemini, openai) */
+  providerType?: import('../../../shared/types').ProviderType;
 }
 
 export function TerminalHeader({
@@ -67,6 +70,7 @@ export function TerminalHeader({
   isExpanded,
   onToggleExpand,
   pendingClaudeResume,
+  providerType,
 }: TerminalHeaderProps) {
   const { t } = useTranslation(['terminal', 'common']);
   const backlogTasks = tasks.filter((t) => t.status === 'backlog');
@@ -100,13 +104,18 @@ export function TerminalHeader({
             terminalCount={terminalCount}
           />
         </div>
-        {isClaudeMode && (
+        {(isClaudeMode || providerType) && (
           <span
-            className="flex items-center gap-1 text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded"
-            title="Claude"
+            className={cn(
+              'flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded',
+              providerType === 'gemini' ? 'text-blue-400 bg-blue-400/10'
+                : providerType === 'openai' ? 'text-green-400 bg-green-400/10'
+                : 'text-primary bg-primary/10'
+            )}
+            title={providerType ? PROVIDER_DISPLAY_NAMES[providerType] : 'Claude'}
           >
             <Sparkles className="h-2.5 w-2.5" />
-            {terminalCount < 4 && <span>Claude</span>}
+            {terminalCount < 4 && <span>{providerType ? PROVIDER_DISPLAY_NAMES[providerType] : 'Claude'}</span>}
           </span>
         )}
         {pendingClaudeResume && (
@@ -172,7 +181,7 @@ export function TerminalHeader({
             {terminalCount < 4 && t('terminal:worktree.openInIDE')}
           </Button>
         )}
-        {!isClaudeMode && status !== 'exited' && (
+        {!isClaudeMode && !providerType && status !== 'exited' && (
           <Button
             variant="ghost"
             size={terminalCount >= 4 ? 'icon' : 'sm'}

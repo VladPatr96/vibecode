@@ -883,6 +883,9 @@ export interface ElectronAPI {
 
   // Queue Routing API (rate limit recovery)
   queue: import('../../preload/api/queue-api').QueueAPI;
+
+  // Multi-CLI Provider API (Claude/Gemini/OpenAI)
+  provider: import('../../preload/api/provider-api').ProviderAPI;
 }
 
 declare global {

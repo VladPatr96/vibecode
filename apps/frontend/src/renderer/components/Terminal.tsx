@@ -572,6 +572,7 @@ Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title
         isExpanded={isExpanded}
         onToggleExpand={onToggleExpand}
         pendingClaudeResume={terminal?.pendingClaudeResume}
+        providerType={terminal?.providerType}
       />
 
       <div

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { v4 as uuid } from 'uuid';
 import { arrayMove } from '@dnd-kit/sortable';
-import type { TerminalSession, TerminalWorktreeConfig } from '../../shared/types';
+import type { TerminalSession, TerminalWorktreeConfig, ProviderType } from '../../shared/types';
 import { terminalBufferManager } from '../lib/terminal-buffer-manager';
 import { debugLog, debugError } from '../../shared/utils/debug-logger';
 
@@ -78,9 +78,6 @@ export function writeToTerminal(terminalId: string, data: string): void {
 
 export type TerminalStatus = 'idle' | 'running' | 'claude-active' | 'exited';
 
-// Provider type for multi-CLI support
-export type TerminalProviderType = 'claude' | 'gemini' | 'openai';
-
 export interface Terminal {
   id: string;
   title: string;
@@ -99,7 +96,7 @@ export interface Terminal {
   displayOrder?: number;  // Display order for tab persistence (lower = further left)
   claudeNamedOnce?: boolean;  // Whether this Claude terminal has been auto-named based on initial message (prevents repeated naming)
   // Multi-provider support
-  providerType?: TerminalProviderType;  // CLI provider type (claude, gemini, openai)
+  providerType?: ProviderType;  // CLI provider type (claude, gemini, openai)
   providerProfileId?: string;  // Provider profile ID for credentials
 }
 
@@ -135,8 +132,8 @@ interface TerminalState {
   setPendingClaudeResume: (id: string, pending: boolean) => void;
   setClaudeNamedOnce: (id: string, named: boolean) => void;
   // Multi-provider support
-  setTerminalProvider: (id: string, providerType: TerminalProviderType, profileId?: string) => void;
-  getTerminalProvider: (id: string) => { providerType: TerminalProviderType; profileId?: string } | null;
+  setTerminalProvider: (id: string, providerType: ProviderType, profileId?: string) => void;
+  getTerminalProvider: (id: string) => { providerType: ProviderType; profileId?: string } | null;
   clearAllTerminals: () => void;
   setHasRestoredSessions: (value: boolean) => void;
   reorderTerminals: (activeId: string, overId: string) => void;
@@ -412,7 +409,7 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
   },
 
   // Multi-provider support
-  setTerminalProvider: (id: string, providerType: TerminalProviderType, profileId?: string) => {
+  setTerminalProvider: (id: string, providerType: ProviderType, profileId?: string) => {
     set((state) => ({
       terminals: state.terminals.map((t) =>
         t.id === id ? { ...t, providerType, providerProfileId: profileId } : t

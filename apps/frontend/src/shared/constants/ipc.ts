@@ -71,6 +71,12 @@ export const IPC_CHANNELS = {
   TERMINAL_INPUT: 'terminal:input',
   TERMINAL_RESIZE: 'terminal:resize',
   TERMINAL_INVOKE_CLAUDE: 'terminal:invokeClaude',
+  TERMINAL_INVOKE_PROVIDER: 'terminal:invokeProvider',
+
+  // Provider operations (multi-CLI support)
+  PROVIDER_LIST: 'provider:list',
+  PROVIDER_HEALTH_CHECK: 'provider:healthCheck',
+
   TERMINAL_GENERATE_NAME: 'terminal:generateName',
   TERMINAL_SET_TITLE: 'terminal:setTitle',  // Renderer -> Main: user renamed terminal
   TERMINAL_SET_WORKTREE_CONFIG: 'terminal:setWorktreeConfig',  // Renderer -> Main: worktree association changed

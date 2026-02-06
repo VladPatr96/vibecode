@@ -23,6 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { Plus, Sparkles, Grid2X2, FolderTree, File, Folder, History, ChevronDown, Loader2, TerminalSquare, Settings } from 'lucide-react';
 import { SortableTerminalWrapper } from './SortableTerminalWrapper';
+import { NewTerminalDialog } from './terminal/NewTerminalDialog';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -80,6 +81,9 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
 
   // Expanded terminal state - when set, this terminal takes up the full grid space
   const [expandedTerminalId, setExpandedTerminalId] = useState<string | null>(null);
+
+  // Provider terminal creation dialog state
+  const [showNewTerminalDialog, setShowNewTerminalDialog] = useState(false);
 
   // Reset expanded terminal when project changes
   useEffect(() => {
@@ -252,6 +256,22 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
     if (canAddTerminal(projectPath)) {
       addTerminal(projectPath, projectPath);
     }
+  }, [addTerminal, canAddTerminal, projectPath]);
+
+  const handleCreateProviderTerminal = useCallback((providerType: import('../../shared/types').ProviderType, _profile: import('../../shared/types').ProviderProfile) => {
+    if (!canAddTerminal(projectPath)) return;
+    const terminal = addTerminal(projectPath, projectPath);
+    if (terminal && providerType !== 'claude') {
+      // Set provider type in store
+      useTerminalStore.getState().setTerminalProvider(terminal.id, providerType);
+      // Invoke the provider CLI
+      window.electronAPI.provider.invokeProviderInTerminal(terminal.id, providerType, { cwd: projectPath });
+    } else if (terminal && providerType === 'claude') {
+      // For Claude, use the existing invoke
+      useTerminalStore.getState().setClaudeMode(terminal.id, true);
+      window.electronAPI.invokeClaudeInTerminal(terminal.id, projectPath);
+    }
+    setShowNewTerminalDialog(false);
   }, [addTerminal, canAddTerminal, projectPath]);
 
   // Toggle terminal expand state
@@ -486,19 +506,33 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
                 Invoke Claude All
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1.5"
-              onClick={handleAddTerminal}
-              disabled={!canAddTerminal(projectPath)}
-            >
-              <Plus className="h-3 w-3" />
-              New Terminal
-              <kbd className="ml-1 text-[10px] text-muted-foreground">
-                {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+T
-              </kbd>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs gap-1.5"
+                  disabled={!canAddTerminal(projectPath)}
+                >
+                  <Plus className="h-3 w-3" />
+                  New Terminal
+                  <kbd className="ml-1 text-[10px] text-muted-foreground">
+                    {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+T
+                  </kbd>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleAddTerminal}>
+                  <TerminalSquare className="h-4 w-4 mr-2" />
+                  Shell Terminal
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowNewTerminalDialog(true)}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Terminal...
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {/* File explorer toggle button */}
             {projectPath && (
               <Button
@@ -612,6 +646,11 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
           )}
         </DragOverlay>
       </div>
+      <NewTerminalDialog
+        isOpen={showNewTerminalDialog}
+        onClose={() => setShowNewTerminalDialog(false)}
+        onCreateTerminal={handleCreateProviderTerminal}
+      />
     </DndContext>
   );
 }

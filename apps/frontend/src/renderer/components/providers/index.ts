@@ -1,2 +1,3 @@
 export { ProviderSelector } from './ProviderSelector';
-export type { ProviderType, ProviderProfile } from './ProviderSelector';
+// ProviderType and ProviderProfile are now exported from @shared/types/provider
+export type { ProviderType, ProviderProfile } from '@shared/types';

@@ -249,6 +249,12 @@ const browserMockAPI: ElectronAPI = {
     onQueueBlockedNoProfiles: () => () => {}
   },
 
+  provider: {
+    getAvailableProviders: async () => ({ success: true, providers: [{ type: 'claude' as const, displayName: 'Claude Code' }] }),
+    providerHealthCheck: async () => ({ success: true, healthy: false }),
+    invokeProviderInTerminal: async () => ({ success: true }),
+  },
+
   // Claude Code Operations
   checkClaudeCodeVersion: async () => ({
     success: true,

@@ -4,28 +4,8 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-
-// Provider types matching backend
-export type ProviderType = 'claude' | 'gemini' | 'openai';
-
-export interface ProviderProfile {
-  id: string;
-  name: string;
-  providerType: ProviderType;
-  model: string;
-}
-
-const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
-  claude: 'Claude Code',
-  gemini: 'Gemini CLI',
-  openai: 'OpenAI Codex',
-};
-
-const PROVIDER_ICONS: Record<ProviderType, string> = {
-  claude: '🟠',
-  gemini: '🔵',
-  openai: '🟢',
-};
+import type { ProviderType, ProviderProfile } from '@shared/types';
+import { PROVIDER_DISPLAY_NAMES, PROVIDER_COLORS } from '@shared/types';
 
 interface ProviderSelectorProps {
   availableProviders: ProviderType[];
@@ -70,7 +50,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
             disabled={disabled}
             title={PROVIDER_DISPLAY_NAMES[provider]}
           >
-            <span className="provider-icon text-lg">{PROVIDER_ICONS[provider]}</span>
+            <span className={cn('provider-icon text-lg font-bold', PROVIDER_COLORS[provider])}>●</span>
             <span className="provider-name text-sm font-medium">
               {PROVIDER_DISPLAY_NAMES[provider]}
             </span>

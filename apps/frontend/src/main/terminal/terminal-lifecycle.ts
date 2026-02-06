@@ -94,7 +94,8 @@ export async function createTerminal(
       cwd: terminalCwd,
       outputBuffer: '',
       title: `Terminal ${terminals.size + 1}`,
-      shellType
+      shellType,
+      providerType: options.providerType
     };
 
     terminals.set(id, terminal);

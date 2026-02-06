@@ -4,20 +4,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { ProviderSelector } from '../providers/ProviderSelector';
-import type { ProviderType, ProviderProfile } from '../providers/ProviderSelector';
+import type { ProviderType, ProviderProfile } from '@shared/types';
+import { PROVIDER_DISPLAY_NAMES, DEFAULT_MODELS } from '@shared/types';
 import { cn } from '@/lib/utils';
-
-const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
-  claude: 'Claude Code',
-  gemini: 'Gemini CLI',
-  openai: 'OpenAI Codex',
-};
-
-const DEFAULT_MODELS: Record<ProviderType, string> = {
-  claude: 'claude-sonnet-4-20250514',
-  gemini: 'gemini-2.0-flash',
-  openai: 'gpt-4o',
-};
 
 interface NewTerminalDialogProps {
   isOpen: boolean;

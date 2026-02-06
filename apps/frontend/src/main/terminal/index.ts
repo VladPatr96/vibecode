@@ -33,3 +33,7 @@ export * as TerminalLifecycle from './terminal-lifecycle';
 
 // Event handler utilities
 export * as TerminalEventHandler from './terminal-event-handler';
+
+// Provider bridge
+export { TerminalProviderBridge, createTerminalProviderBridge } from './terminal-provider-bridge';
+export type { TerminalProviderConfig } from './terminal-provider-bridge';

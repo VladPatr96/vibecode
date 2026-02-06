@@ -2,6 +2,8 @@
  * Terminal-related types
  */
 
+import type { ProviderType } from './provider';
+
 /**
  * Shell type for Windows terminals.
  * Used to determine correct command chaining syntax:
@@ -20,6 +22,8 @@ export interface TerminalCreateOptions {
   skipOAuthToken?: boolean;
   /** Custom environment variables to add to the terminal (merged with defaults) */
   env?: Record<string, string>;
+  /** CLI provider type for multi-provider terminal support */
+  providerType?: ProviderType;
 }
 
 export interface TerminalResizeOptions {
