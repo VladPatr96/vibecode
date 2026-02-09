@@ -28,8 +28,8 @@ export interface TerminalProcess {
   shellType?: WindowsShellType;
   /** Whether this terminal is waiting for Claude onboarding to complete (login flow) */
   awaitingOnboardingComplete?: boolean;
-  /** Provider type for multi-CLI support (claude | gemini | openai) */
-  providerType?: 'claude' | 'gemini' | 'openai';
+  /** Provider type for multi-CLI support */
+  providerType?: import('../../shared/types/provider').ProviderType;
 }
 
 /**
