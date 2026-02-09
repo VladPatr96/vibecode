@@ -6,6 +6,8 @@ export enum ProviderType {
   CLAUDE = 'claude',
   GEMINI = 'gemini',
   OPENAI = 'openai',
+  CODEX = 'codex',
+  OPENCODE = 'opencode',
 }
 
 export interface ProviderCredentials {
@@ -58,16 +60,22 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   [ProviderType.CLAUDE]: 'Claude Code',
   [ProviderType.GEMINI]: 'Gemini CLI',
   [ProviderType.OPENAI]: 'OpenAI Codex',
+  [ProviderType.CODEX]: 'Codex CLI',
+  [ProviderType.OPENCODE]: 'OpenCode CLI',
 };
 
 export const PROVIDER_ICONS: Record<ProviderType, string> = {
   [ProviderType.CLAUDE]: '🟠',
   [ProviderType.GEMINI]: '🔵',
   [ProviderType.OPENAI]: '🟢',
+  [ProviderType.CODEX]: '🟩',
+  [ProviderType.OPENCODE]: '🟣',
 };
 
 export const DEFAULT_MODELS: Record<ProviderType, string> = {
   [ProviderType.CLAUDE]: 'claude-sonnet-4-20250514',
   [ProviderType.GEMINI]: 'gemini-2.0-flash',
   [ProviderType.OPENAI]: 'gpt-4o',
+  [ProviderType.CODEX]: 'gpt-4o',
+  [ProviderType.OPENCODE]: 'claude-sonnet-4-20250514',
 };

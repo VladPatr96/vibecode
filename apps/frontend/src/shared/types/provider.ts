@@ -8,7 +8,7 @@
  * at runtime. This shared type is the canonical type for cross-process usage.
  */
 
-export type ProviderType = 'claude' | 'gemini' | 'openai';
+export type ProviderType = 'claude' | 'gemini' | 'openai' | 'codex' | 'opencode';
 
 export interface ProviderProfile {
   id: string;
@@ -55,16 +55,22 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   claude: 'Claude Code',
   gemini: 'Gemini CLI',
   openai: 'OpenAI Codex',
+  codex: 'Codex CLI',
+  opencode: 'OpenCode CLI',
 };
 
 export const PROVIDER_COLORS: Record<ProviderType, string> = {
   claude: 'text-orange-400',
   gemini: 'text-blue-400',
   openai: 'text-green-400',
+  codex: 'text-emerald-400',
+  opencode: 'text-purple-400',
 };
 
 export const DEFAULT_MODELS: Record<ProviderType, string> = {
   claude: 'claude-sonnet-4-20250514',
   gemini: 'gemini-2.0-flash',
   openai: 'gpt-4o',
+  codex: 'gpt-4o',
+  opencode: 'claude-sonnet-4-20250514',
 };
