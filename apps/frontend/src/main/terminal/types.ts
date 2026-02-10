@@ -1,6 +1,6 @@
 import type * as pty from '@lydell/node-pty';
 import type { BrowserWindow } from 'electron';
-import type { TerminalWorktreeConfig, WindowsShellType } from '../../shared/types';
+import type { TerminalWorktreeConfig, WindowsShellType, ProviderType } from '../../shared/types';
 
 // Re-export WindowsShellType for backwards compatibility
 export type { WindowsShellType } from '../../shared/types';
@@ -29,7 +29,7 @@ export interface TerminalProcess {
   /** Whether this terminal is waiting for Claude onboarding to complete (login flow) */
   awaitingOnboardingComplete?: boolean;
   /** Provider type for multi-CLI support (claude | gemini | openai | opencode) */
-  providerType?: 'claude' | 'gemini' | 'openai' | 'opencode';
+  providerType?: ProviderType;
 }
 
 /**
