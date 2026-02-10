@@ -41,5 +41,9 @@
     "deleteTitle": "Supprimer le Worktree?",
     "deleteDescription": "Ceci supprimera definitivement le worktree et sa branche. Les modifications non committées seront perdues.",
     "detached": "(détaché)"
+  },
+  "provider": {
+    "selectProvider": "Sélectionner le fournisseur",
+    "availableProviders": "Fournisseurs disponibles"
   }
 }
