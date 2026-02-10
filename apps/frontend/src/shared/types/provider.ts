@@ -71,3 +71,15 @@ export const DEFAULT_MODELS: Record<ProviderType, string> = {
   openai: 'gpt-4o',
   opencode: 'opencode-default',
 };
+
+/**
+ * Provider icon identifiers for lucide-react.
+ * Import the icon components and use this mapping to display provider-specific icons.
+ * Example: const Icon = PROVIDER_ICONS[providerType]; <Icon />
+ */
+export const PROVIDER_ICONS: Record<ProviderType, string> = {
+  claude: 'Bot',
+  gemini: 'Sparkles',
+  openai: 'Cpu',
+  opencode: 'Code',
+};
