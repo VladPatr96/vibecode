@@ -41,5 +41,9 @@
     "deleteTitle": "Delete Worktree?",
     "deleteDescription": "This will permanently delete the worktree and its branch. Any uncommitted changes will be lost.",
     "detached": "(detached)"
+  },
+  "provider": {
+    "selectProvider": "Select provider",
+    "availableProviders": "Available providers"
   }
 }

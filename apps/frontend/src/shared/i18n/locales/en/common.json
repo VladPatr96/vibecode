@@ -670,5 +670,8 @@
     "progress": "Progress",
     "lastActivityPrefix": "last activity",
     "lastProgressUpdateTooltip": "Last progress update received"
+  },
+  "status": {
+    "active": "Active"
   }
 }
