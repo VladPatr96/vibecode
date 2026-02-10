@@ -3,12 +3,12 @@
  * Used by both main process (providers/) and renderer (components/providers/).
  *
  * NOTE: The main process providers/ also has its own ProviderType enum in
- * main/providers/types.ts. The enum values ('claude', 'gemini', 'openai')
+ * main/providers/types.ts. The enum values ('claude', 'gemini', 'openai', 'opencode')
  * are identical to this string literal union, so they are interchangeable
  * at runtime. This shared type is the canonical type for cross-process usage.
  */
 
-export type ProviderType = 'claude' | 'gemini' | 'openai';
+export type ProviderType = 'claude' | 'gemini' | 'openai' | 'opencode';
 
 export interface ProviderProfile {
   id: string;
@@ -55,16 +55,19 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   claude: 'Claude Code',
   gemini: 'Gemini CLI',
   openai: 'OpenAI Codex',
+  opencode: 'OpenCode',
 };
 
 export const PROVIDER_COLORS: Record<ProviderType, string> = {
   claude: 'text-orange-400',
   gemini: 'text-blue-400',
   openai: 'text-green-400',
+  opencode: 'text-purple-400',
 };
 
 export const DEFAULT_MODELS: Record<ProviderType, string> = {
   claude: 'claude-sonnet-4-20250514',
   gemini: 'gemini-2.0-flash',
   openai: 'gpt-4o',
+  opencode: 'opencode-default',
 };
