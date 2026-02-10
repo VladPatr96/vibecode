@@ -10,6 +10,7 @@ class ProviderType(str, Enum):
     CLAUDE = "claude"
     GEMINI = "gemini"
     OPENAI = "openai"
+    OPENCODE = "opencode"
 
 
 @dataclass
