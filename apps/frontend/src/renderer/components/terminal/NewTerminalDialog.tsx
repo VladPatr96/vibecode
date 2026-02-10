@@ -25,7 +25,7 @@ export const NewTerminalDialog: React.FC<NewTerminalDialogProps> = ({
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [newProfileName, setNewProfileName] = useState<string>('');
 
-  const availableProviders: ProviderType[] = ['claude', 'gemini', 'openai'];
+  const availableProviders: ProviderType[] = ['claude', 'gemini', 'openai', 'opencode'];
 
   const filteredProfiles = existingProfiles.filter(
     (p) => p.providerType === selectedProvider

@@ -110,6 +110,7 @@ export function TerminalHeader({
               'flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded',
               providerType === 'gemini' ? 'text-blue-400 bg-blue-400/10'
                 : providerType === 'openai' ? 'text-green-400 bg-green-400/10'
+                : providerType === 'opencode' ? 'text-purple-400 bg-purple-400/10'
                 : 'text-primary bg-primary/10'
             )}
             title={providerType ? PROVIDER_DISPLAY_NAMES[providerType] : 'Claude'}
