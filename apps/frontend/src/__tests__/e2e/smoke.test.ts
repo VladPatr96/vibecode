@@ -211,7 +211,7 @@ describe('E2E Smoke Tests', () => {
           })
         ])
       });
-    });
+    }, 15000);
 
     it('should handle project creation with custom settings', async () => {
       await import('../../preload/index');

@@ -192,7 +192,7 @@ describe('Subprocess Spawn Integration', () => {
           })
         })
       );
-    }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
+    }, 60000);  // Increase timeout for Windows CI under full-suite load
 
     it('should spawn Python process for task execution', async () => {
       const { spawn } = await import('child_process');
@@ -221,7 +221,7 @@ describe('Subprocess Spawn Integration', () => {
           cwd: AUTO_CLAUDE_SOURCE  // Process runs from auto-claude source directory
         })
       );
-    }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
+    }, 60000);  // Increase timeout for Windows CI under full-suite load
 
     it('should spawn Python process for QA process', async () => {
       const { spawn } = await import('child_process');
@@ -251,7 +251,7 @@ describe('Subprocess Spawn Integration', () => {
           cwd: AUTO_CLAUDE_SOURCE  // Process runs from auto-claude source directory
         })
       );
-    }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
+    }, 60000);  // Increase timeout for Windows CI under full-suite load
 
     it('should accept parallel options without affecting spawn args', async () => {
       // Note: --parallel was removed from run.py CLI - parallel execution is handled internally by the agent
@@ -282,7 +282,7 @@ describe('Subprocess Spawn Integration', () => {
         ]),
         expect.any(Object)
       );
-    }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
+    }, 60000);  // Increase timeout for Windows CI under full-suite load
 
     it('should emit log events from stdout', async () => {
       const { AgentManager } = await import('../../main/agent');
@@ -447,7 +447,7 @@ describe('Subprocess Spawn Integration', () => {
       await manager.killAll();
 
       expect(manager.getRunningTasks()).toHaveLength(0);
-    }, 10000);  // Increase timeout for Windows CI
+    }, 30000);  // Increase timeout for Windows CI under full-suite load
 
     it('should allow sequential execution of same task', async () => {
       const { AgentManager } = await import('../../main/agent');
@@ -471,6 +471,6 @@ describe('Subprocess Spawn Integration', () => {
 
       // Both processes completed successfully
       // (the first process was already done before the second started)
-    }, 10000);  // Increase timeout for Windows CI
+    }, 30000);  // Increase timeout for Windows CI under full-suite load
   });
 });

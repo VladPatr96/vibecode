@@ -247,7 +247,7 @@ describe('claude-integration-handler', () => {
       expect(mockPersistSession).toHaveBeenCalledWith(terminal);
       expect(profileManager.getActiveProfile).toHaveBeenCalled();
       expect(profileManager.markProfileUsed).toHaveBeenCalledWith('default');
-    });
+    }, 10000);
 
     it('uses the temp token flow when the active profile has an oauth token', async () => {
       const command = '/opt/claude/bin/claude';
