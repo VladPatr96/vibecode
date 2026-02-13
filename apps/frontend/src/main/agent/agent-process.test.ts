@@ -9,9 +9,21 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'events';
 
 // Create a mock process object that will be returned by spawn
+const mockProcesses: Array<{
+  __emitStdout: (data: string) => void;
+}> = [];
+
 function createMockProcess() {
-  return {
-    stdout: { on: vi.fn() },
+  let stdoutHandler: ((data: Buffer) => void) | null = null;
+
+  const mockProcess = {
+    stdout: {
+      on: vi.fn((event: string, callback: (data: Buffer) => void) => {
+        if (event === 'data') {
+          stdoutHandler = callback;
+        }
+      })
+    },
     stderr: { on: vi.fn() },
     on: vi.fn((event: string, callback: any) => {
       if (event === 'exit') {
@@ -19,7 +31,16 @@ function createMockProcess() {
         setTimeout(() => callback(0), 10);
       }
     }),
-    kill: vi.fn()
+    kill: vi.fn(),
+    __emitStdout: (data: string) => {
+      stdoutHandler?.(Buffer.from(data, 'utf-8'));
+    }
+  };
+
+  mockProcesses.push(mockProcess);
+
+  return {
+    ...mockProcess
   };
 }
 
@@ -178,6 +199,7 @@ describe('AgentProcessManager - API Profile Env Injection (Story 2.3)', () => {
     // Reset all mocks and spawn calls
     vi.clearAllMocks();
     spawnCalls.length = 0;
+    mockProcesses.length = 0;
 
     // Clear environment variables that could interfere with tests
     delete process.env.ANTHROPIC_AUTH_TOKEN;
@@ -797,6 +819,40 @@ describe('AgentProcessManager - API Profile Env Injection (Story 2.3)', () => {
       // Both should be set
       expect(envArg.CLAUDE_CLI_PATH).toBe('/opt/homebrew/bin/claude');
       expect(envArg.GITHUB_CLI_PATH).toBe('/opt/homebrew/bin/gh');
+    });
+  });
+
+  describe('Task 24: provider env per phase', () => {
+    it('injects configured provider env on initial spawn', async () => {
+      processManager.configureTaskRouting('task-1', {
+        planning: { provider: 'gemini', model: 'gemini-2.0-flash' },
+        coding: { provider: 'claude', model: 'claude-sonnet-4-20250514' },
+        qa: { provider: 'codex', model: 'gpt-4o' },
+      });
+
+      await processManager.spawnProcess('task-1', '/fake/cwd', ['run.py'], {}, 'task-execution');
+
+      expect(spawnCalls).toHaveLength(1);
+      expect(spawnCalls[0].options.env.AGENT_PROVIDER_TYPE).toBe('gemini');
+      expect(spawnCalls[0].options.env.AGENT_PROVIDER_MODEL).toBe('gemini-2.0-flash');
+    });
+
+    it('updates next spawn provider env after phase transitions', async () => {
+      processManager.configureTaskRouting('task-1', {
+        planning: { provider: 'gemini', model: 'gemini-2.0-flash' },
+        coding: { provider: 'claude', model: 'claude-sonnet-4-20250514' },
+        qa: { provider: 'codex', model: 'gpt-4o' },
+      });
+
+      await processManager.spawnProcess('task-1', '/fake/cwd', ['run.py'], {}, 'task-execution');
+      mockProcesses[0].__emitStdout('__EXEC_PHASE__:{"phase":"coding","message":"coding"}\n');
+      mockProcesses[0].__emitStdout('__EXEC_PHASE__:{"phase":"qa_review","message":"qa"}\n');
+
+      await processManager.spawnProcess('task-1', '/fake/cwd', ['run.py'], {}, 'task-execution');
+
+      expect(spawnCalls).toHaveLength(2);
+      expect(spawnCalls[1].options.env.AGENT_PROVIDER_TYPE).toBe('codex');
+      expect(spawnCalls[1].options.env.AGENT_PROVIDER_MODEL).toBe('gpt-4o');
     });
   });
 });

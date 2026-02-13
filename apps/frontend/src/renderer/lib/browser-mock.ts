@@ -252,7 +252,42 @@ const browserMockAPI: ElectronAPI = {
   provider: {
     getAvailableProviders: async () => ({ success: true, providers: [{ type: 'claude' as const, displayName: 'Claude Code' }] }),
     providerHealthCheck: async () => ({ success: true, healthy: false }),
+    getProviderStatus: async () => ({
+      success: true,
+      status: {
+        provider: 'claude' as const,
+        installed: true,
+        authenticated: false,
+        rateLimitStatus: 'unknown' as const
+      }
+    }),
     invokeProviderInTerminal: async () => ({ success: true }),
+  },
+
+  routing: {
+    analyzeTask: async () => ({
+      success: true,
+      data: {
+        planning: { provider_type: 'claude', model: 'claude-sonnet-4-20250514', reason: 'Mock recommendation', confidence: 0.5 },
+        coding: { provider_type: 'claude', model: 'claude-sonnet-4-20250514', reason: 'Mock recommendation', confidence: 0.5 },
+        qa: { provider_type: 'claude', model: 'claude-sonnet-4-20250514', reason: 'Mock recommendation', confidence: 0.5 }
+      }
+    }),
+    getDefaults: async () => ({
+      success: true,
+      data: {
+        defaultProviders: { planning: 'claude', coding: 'claude', qa: 'claude' },
+        fallbackChains: {
+          claude: ['gemini', 'codex', 'openai', 'opencode'],
+          gemini: ['claude', 'codex', 'openai', 'opencode'],
+          openai: ['codex', 'claude', 'gemini', 'opencode'],
+          codex: ['openai', 'claude', 'gemini', 'opencode'],
+          opencode: ['claude', 'gemini', 'codex', 'openai']
+        },
+        showConfirmationDialog: true
+      }
+    }),
+    saveDefaults: async () => ({ success: true })
   },
 
   // Claude Code Operations

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { arrayMove } from '@dnd-kit/sortable';
-import type { Task, TaskStatus, SubtaskStatus, ImplementationPlan, Subtask, TaskMetadata, ExecutionProgress, ExecutionPhase, ReviewReason, TaskDraft, ImageAttachment, TaskOrderState } from '../../shared/types';
+import type { Task, TaskStatus, SubtaskStatus, ImplementationPlan, Subtask, TaskMetadata, ExecutionProgress, ExecutionPhase, ReviewReason, TaskDraft, ImageAttachment, TaskOrderState, TaskStartOptions } from '../../shared/types';
 import { debugLog } from '../../shared/utils/debug-logger';
 
 interface TaskState {
@@ -651,7 +651,7 @@ export async function createTask(
 /**
  * Start a task
  */
-export function startTask(taskId: string, options?: { parallel?: boolean; workers?: number }): void {
+export function startTask(taskId: string, options?: TaskStartOptions): void {
   window.electronAPI.startTask(taskId, options);
 }
 

@@ -37,6 +37,7 @@ async def run_followup_planner(
     spec_dir: Path,
     model: str,
     verbose: bool = False,
+    provider_type: str = "claude",
 ) -> bool:
     """
     Run the follow-up planner to add new subtasks to a completed spec.
@@ -58,6 +59,7 @@ async def run_followup_planner(
         spec_dir: Directory containing the completed spec
         model: Claude model to use
         verbose: Whether to show detailed output
+        provider_type: Provider type for model execution (claude by default)
 
     Returns:
         bool: True if planning completed successfully
@@ -99,6 +101,7 @@ async def run_followup_planner(
         project_dir,
         spec_dir,
         planning_model,
+        provider_type=provider_type,
         max_thinking_tokens=planning_thinking_budget,
     )
 

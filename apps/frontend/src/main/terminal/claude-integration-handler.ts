@@ -20,6 +20,8 @@ import { debugLog, debugError } from '../../shared/utils/debug-logger';
 import { escapeShellArg, escapeForWindowsDoubleQuote, buildCdCommand } from '../../shared/utils/shell-escape';
 import { getClaudeCliInvocation, getClaudeCliInvocationAsync } from '../claude-cli-utils';
 import { isWindows } from '../platform';
+import type { ProviderType } from '../../shared/types/provider';
+import { PROVIDER_DISPLAY_NAMES } from '../../shared/types/provider';
 import type {
   TerminalProcess,
   WindowGetter,
@@ -339,6 +341,30 @@ export function shouldAutoRenameTerminal(currentTitle: string): boolean {
  * Callback type for session capture
  */
 type SessionCaptureCallback = (terminalId: string, projectPath: string, startTime: number) => void;
+
+function quoteProviderArg(arg: string): string {
+  if (isWindows()) {
+    return `"${escapeForWindowsDoubleQuote(arg)}"`;
+  }
+  return escapeShellArg(arg);
+}
+
+function buildProviderEnvPrefix(env: Record<string, string>): string {
+  const entries = Object.entries(env);
+  if (entries.length === 0) {
+    return '';
+  }
+
+  if (isWindows()) {
+    return entries
+      .map(([key, value]) => `set "${key}=${escapeForWindowsDoubleQuote(value)}" && `)
+      .join('');
+  }
+
+  return `${entries
+    .map(([key, value]) => `${key}=${escapeShellArg(value)}`)
+    .join(' ')} `;
+}
 
 /**
  * Finalize terminal state after invoking Claude.
@@ -874,6 +900,121 @@ export function handleClaudeExit(
   const win = getWindow();
   if (win) {
     win.webContents.send(IPC_CHANNELS.TERMINAL_CLAUDE_EXIT, terminal.id);
+  }
+}
+
+/**
+ * Handle generic provider exit detection (non-Claude CLIs).
+ */
+export function handleProviderExit(
+  terminal: TerminalProcess,
+  getWindow: WindowGetter
+): void {
+  const providerType = terminal.providerType;
+  if (!providerType || providerType === 'claude') {
+    handleClaudeExit(terminal, getWindow);
+    return;
+  }
+
+  terminal.isClaudeMode = false;
+  terminal.claudeSessionId = undefined;
+  terminal.providerType = undefined;
+
+  if (terminal.projectPath) {
+    SessionHandler.persistSession(terminal);
+  }
+
+  const win = getWindow();
+  if (win) {
+    win.webContents.send('terminal:providerChanged', terminal.id, null);
+  }
+}
+
+/**
+ * Provider-aware invocation entrypoint.
+ * Routes to existing Claude invocation flow or generic CLI provider execution.
+ */
+export async function invokeProvider(
+  terminal: TerminalProcess,
+  providerType: ProviderType,
+  cwd: string | undefined,
+  getWindow: WindowGetter,
+  onSessionCapture: SessionCaptureCallback,
+  dangerouslySkipPermissions?: boolean
+): Promise<void> {
+  if (providerType === 'claude') {
+    await invokeClaudeAsync(
+      terminal,
+      cwd,
+      undefined,
+      getWindow,
+      onSessionCapture,
+      dangerouslySkipPermissions
+    );
+    return;
+  }
+
+  // Ensure provider factories are registered before using the registry.
+  await import('../providers');
+  const { providerRegistry } = await import('../providers/provider-registry');
+  const { ProviderType } = await import('../providers/types');
+
+  const typeMap = {
+    gemini: ProviderType.GEMINI,
+    openai: ProviderType.OPENAI,
+    codex: ProviderType.CODEX,
+    opencode: ProviderType.OPENCODE,
+  } as const;
+
+  const modelMap = {
+    gemini: 'gemini-2.0-flash',
+    openai: 'gpt-4o',
+    codex: 'gpt-4o',
+    opencode: 'deepseek-v3',
+  } as const;
+
+  const providerEnumType = typeMap[providerType];
+  const provider = await providerRegistry.createForTerminal(
+    terminal.id,
+    providerEnumType,
+    {
+      id: `${providerType}-default`,
+      name: `${providerType} Default`,
+      providerType: providerEnumType,
+      model: modelMap[providerType],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+  );
+
+  const cliCommand = provider.getCliCommand();
+  const cliEnv = provider.getCliEnvironment();
+  const cwdCommand = buildCdCommand(cwd, terminal.shellType);
+  const envPrefix = buildProviderEnvPrefix(cliEnv);
+  const command = cliCommand.map(quoteProviderArg).join(' ');
+
+  terminal.providerType = providerType;
+  terminal.isClaudeMode = false;
+  terminal.claudeSessionId = undefined;
+
+  PtyManager.writeToPty(terminal, `${cwdCommand}${envPrefix}${command}\r`);
+
+  if (shouldAutoRenameTerminal(terminal.title)) {
+    const title = PROVIDER_DISPLAY_NAMES[providerType];
+    terminal.title = title;
+    const win = getWindow();
+    if (win) {
+      win.webContents.send(IPC_CHANNELS.TERMINAL_TITLE_CHANGE, terminal.id, title);
+    }
+  }
+
+  if (terminal.projectPath) {
+    SessionHandler.persistSessionAsync(terminal);
+  }
+
+  const win = getWindow();
+  if (win) {
+    win.webContents.send('terminal:providerChanged', terminal.id, providerType);
   }
 }
 

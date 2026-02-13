@@ -53,6 +53,7 @@ def handle_build_command(
     project_dir: Path,
     spec_dir: Path,
     model: str,
+    provider_type: str,
     max_iterations: int | None,
     verbose: bool,
     force_isolated: bool,
@@ -69,6 +70,7 @@ def handle_build_command(
         project_dir: Project root directory
         spec_dir: Spec directory path
         model: Model to use (used as default; may be overridden by task_metadata.json)
+        provider_type: Provider type for model execution
         max_iterations: Maximum number of iterations (None for unlimited)
         verbose: Enable verbose output
         force_isolated: Force isolated workspace mode
@@ -240,6 +242,7 @@ def handle_build_command(
                 max_iterations=max_iterations,
                 verbose=verbose,
                 source_spec_dir=source_spec_dir,  # For syncing progress back to main project
+                provider_type=provider_type,
             )
         )
         debug_success("run.py", "Agent execution completed")
@@ -261,6 +264,7 @@ def handle_build_command(
                         spec_dir=spec_dir,
                         model=model,
                         verbose=verbose,
+                        provider_type=provider_type,
                     )
                 )
 
@@ -312,6 +316,7 @@ def handle_build_command(
             worktree_manager=worktree_manager,
             working_dir=working_dir,
             model=model,
+            provider_type=provider_type,
             max_iterations=max_iterations,
             verbose=verbose,
         )
@@ -330,6 +335,7 @@ def _handle_build_interrupt(
     worktree_manager,
     working_dir: Path,
     model: str,
+    provider_type: str,
     max_iterations: int | None,
     verbose: bool,
 ) -> None:
@@ -342,6 +348,7 @@ def _handle_build_interrupt(
         worktree_manager: Worktree manager instance (if using isolated mode)
         working_dir: Current working directory
         model: Model being used
+        provider_type: Provider type for model execution
         max_iterations: Maximum iterations
         verbose: Verbose mode flag
     """
@@ -448,6 +455,7 @@ def _handle_build_interrupt(
                     project_dir=working_dir,
                     spec_dir=spec_dir,
                     model=model,
+                    provider_type=provider_type,
                     max_iterations=max_iterations,
                     verbose=verbose,
                 )

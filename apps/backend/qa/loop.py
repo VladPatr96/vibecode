@@ -62,6 +62,7 @@ async def run_qa_validation_loop(
     spec_dir: Path,
     model: str,
     verbose: bool = False,
+    provider_type: str = "claude",
 ) -> bool:
     """
     Run the full QA validation loop.
@@ -82,6 +83,7 @@ async def run_qa_validation_loop(
         spec_dir: Spec directory
         model: Claude model to use
         verbose: Whether to show detailed output
+        provider_type: Provider type for model execution (claude by default)
 
     Returns:
         True if QA approved, False otherwise
@@ -162,6 +164,7 @@ async def run_qa_validation_loop(
             spec_dir,
             qa_model,
             agent_type="qa_fixer",
+            provider_type=provider_type,
             max_thinking_tokens=fixer_thinking_budget,
         )
 
@@ -250,6 +253,7 @@ async def run_qa_validation_loop(
             spec_dir,
             qa_model,
             agent_type="qa_reviewer",
+            provider_type=provider_type,
             max_thinking_tokens=qa_thinking_budget,
         )
 
@@ -445,6 +449,7 @@ async def run_qa_validation_loop(
                 spec_dir,
                 qa_model,
                 agent_type="qa_fixer",
+                provider_type=provider_type,
                 max_thinking_tokens=fixer_thinking_budget,
             )
 

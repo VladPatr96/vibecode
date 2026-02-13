@@ -32,6 +32,19 @@ import { killProcessGracefully, isWindows } from '../platform';
  */
 type CliTool = 'claude' | 'gh' | 'glab';
 
+type ProviderPhase = 'planning' | 'coding' | 'qa';
+
+interface ProviderPhaseConfig {
+  provider: string;
+  model: string;
+}
+
+interface TaskPhaseRoutingConfig {
+  planning?: ProviderPhaseConfig;
+  coding?: ProviderPhaseConfig;
+  qa?: ProviderPhaseConfig;
+}
+
 /**
  * Mapping of CLI tools to their environment variable names
  * This ensures type safety - tools cannot be mismatched with env vars.
@@ -108,6 +121,8 @@ export class AgentProcessManager {
   // Use null to indicate not yet configured - getPythonPath() will use fallback
   private _pythonPath: string | null = null;
   private autoBuildSourcePath: string = '';
+  private taskRoutingConfig: Map<string, TaskPhaseRoutingConfig> = new Map();
+  private nextSpawnProviderEnvByTask: Map<string, Record<string, string>> = new Map();
 
   constructor(state: AgentState, events: AgentEvents, emitter: EventEmitter) {
     this.state = state;
@@ -129,6 +144,54 @@ export class AgentProcessManager {
     if (autoBuildSourcePath) {
       this.autoBuildSourcePath = autoBuildSourcePath;
     }
+  }
+
+  configureTaskRouting(taskId: string, routingConfig?: TaskPhaseRoutingConfig): void {
+    if (!routingConfig) {
+      this.taskRoutingConfig.delete(taskId);
+      this.nextSpawnProviderEnvByTask.delete(taskId);
+      return;
+    }
+
+    this.taskRoutingConfig.set(taskId, routingConfig);
+    const initial = routingConfig.planning || routingConfig.coding || routingConfig.qa;
+    if (initial) {
+      this.nextSpawnProviderEnvByTask.set(taskId, {
+        AGENT_PROVIDER_TYPE: initial.provider,
+        AGENT_PROVIDER_MODEL: initial.model,
+      });
+    }
+  }
+
+  private getPhaseConfigForExecutionPhase(
+    taskId: string,
+    phase: ExecutionProgressData['phase']
+  ): ProviderPhaseConfig | undefined {
+    const config = this.taskRoutingConfig.get(taskId);
+    if (!config) {
+      return undefined;
+    }
+    if (phase === 'planning') {
+      return config.planning;
+    }
+    if (phase === 'coding') {
+      return config.coding;
+    }
+    if (phase === 'qa_review' || phase === 'qa_fixing') {
+      return config.qa;
+    }
+    return undefined;
+  }
+
+  private updateNextSpawnProviderEnv(taskId: string, phase: ExecutionProgressData['phase']): void {
+    const phaseConfig = this.getPhaseConfigForExecutionPhase(taskId, phase);
+    if (!phaseConfig) {
+      return;
+    }
+    this.nextSpawnProviderEnvByTask.set(taskId, {
+      AGENT_PROVIDER_TYPE: phaseConfig.provider,
+      AGENT_PROVIDER_MODEL: phaseConfig.model,
+    });
   }
 
   /**
@@ -528,7 +591,11 @@ export class AgentProcessManager {
       spawnId
     });
 
-    const env = this.setupProcessEnvironment(extraEnv);
+    const phaseProviderEnv = this.nextSpawnProviderEnvByTask.get(taskId) || {};
+    const env = this.setupProcessEnvironment({
+      ...extraEnv,
+      ...phaseProviderEnv,
+    });
 
     // Get Python environment (PYTHONPATH for bundled packages, etc.)
     const pythonEnv = pythonEnvManager.getPythonEnv();
@@ -662,6 +729,10 @@ export class AgentProcessManager {
 
         currentPhase = phaseUpdate.phase;
 
+        if (phaseChanged) {
+          this.updateNextSpawnProviderEnv(taskId, currentPhase);
+        }
+
         if (phaseUpdate.currentSubtask) {
           currentSubtask = phaseUpdate.currentSubtask;
         }
@@ -739,6 +810,10 @@ export class AgentProcessManager {
       }
 
       this.state.deleteProcess(taskId);
+      if (currentPhase === 'complete') {
+        this.nextSpawnProviderEnvByTask.delete(taskId);
+        this.taskRoutingConfig.delete(taskId);
+      }
 
       if (this.state.wasSpawnKilled(spawnId)) {
         this.state.clearKilledSpawn(spawnId);

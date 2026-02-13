@@ -24,12 +24,63 @@ export const NewTerminalDialog: React.FC<NewTerminalDialogProps> = ({
   const [selectedProvider, setSelectedProvider] = useState<ProviderType>('claude');
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [newProfileName, setNewProfileName] = useState<string>('');
+  const [providerHealthStatus, setProviderHealthStatus] = useState<Partial<Record<ProviderType, boolean>>>({});
+  const [isCheckingProviders, setIsCheckingProviders] = useState<boolean>(false);
 
-  const availableProviders: ProviderType[] = ['claude', 'gemini', 'openai'];
+  const availableProviders: ProviderType[] = ['claude', 'gemini', 'openai', 'codex', 'opencode'];
+  const healthyProviders = availableProviders.filter((provider) => providerHealthStatus[provider] !== false);
 
   const filteredProfiles = existingProfiles.filter(
     (p) => p.providerType === selectedProvider
   );
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    let cancelled = false;
+    setIsCheckingProviders(true);
+
+    Promise.all(
+      availableProviders.map(async (provider) => {
+        try {
+          const result = await window.electronAPI.provider.providerHealthCheck(provider);
+          return { provider, healthy: result.success ? result.healthy !== false : false };
+        } catch {
+          return { provider, healthy: false };
+        }
+      })
+    )
+      .then((results) => {
+        if (cancelled) {
+          return;
+        }
+        const nextState: Partial<Record<ProviderType, boolean>> = {};
+        for (const result of results) {
+          nextState[result.provider] = result.healthy;
+        }
+        setProviderHealthStatus(nextState);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsCheckingProviders(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (healthyProviders.length === 0) {
+      return;
+    }
+    if (!healthyProviders.includes(selectedProvider)) {
+      setSelectedProvider(healthyProviders[0]);
+    }
+  }, [healthyProviders, selectedProvider]);
 
   useEffect(() => {
     if (filteredProfiles.length > 0) {
@@ -90,8 +141,18 @@ export const NewTerminalDialog: React.FC<NewTerminalDialogProps> = ({
       >
         <h2 className="text-lg font-semibold mb-4">New Terminal</h2>
 
+        {isCheckingProviders && (
+          <p className="mb-3 text-xs text-muted-foreground">Checking provider availability...</p>
+        )}
+
+        {!isCheckingProviders && healthyProviders.length === 0 && (
+          <p className="mb-3 text-xs text-destructive">
+            No available CLI providers detected. Install at least one provider CLI and try again.
+          </p>
+        )}
+
         <ProviderSelector
-          availableProviders={availableProviders}
+          availableProviders={healthyProviders.length > 0 ? healthyProviders : availableProviders}
           selectedProvider={selectedProvider}
           profiles={existingProfiles}
           selectedProfileId={selectedProfileId}
@@ -136,9 +197,10 @@ export const NewTerminalDialog: React.FC<NewTerminalDialogProps> = ({
           <button
             type="button"
             onClick={handleCreate}
+            disabled={healthyProviders.length === 0}
             className={cn(
               'px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm',
-              'hover:bg-primary/90 transition-colors'
+              'hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             )}
           >
             Create Terminal

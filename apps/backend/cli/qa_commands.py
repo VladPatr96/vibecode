@@ -75,6 +75,7 @@ def handle_qa_command(
     project_dir: Path,
     spec_dir: Path,
     model: str,
+    provider_type: str = "claude",
     verbose: bool = False,
 ) -> None:
     """
@@ -84,6 +85,7 @@ def handle_qa_command(
         project_dir: Project root directory
         spec_dir: Spec directory path
         model: Model to use for QA
+        provider_type: Provider type for model execution
         verbose: Enable verbose output
     """
     print_banner()
@@ -114,6 +116,7 @@ def handle_qa_command(
                 project_dir=project_dir,
                 spec_dir=spec_dir,
                 model=model,
+                provider_type=provider_type,
                 verbose=verbose,
             )
         )

@@ -446,10 +446,11 @@ def create_client(
     spec_dir: Path,
     model: str,
     agent_type: str = "coder",
+    provider_type: str = "claude",
     max_thinking_tokens: int | None = None,
     output_format: dict | None = None,
     agents: dict | None = None,
-) -> ClaudeSDKClient:
+) -> Any:
     """
     Create a Claude Agent SDK client with multi-layered security.
 
@@ -489,6 +490,38 @@ def create_client(
        (see security.py for ALLOWED_COMMANDS)
     4. Tool filtering - Each agent type only sees relevant tools (prevents misuse)
     """
+    provider_type = (provider_type or "claude").lower()
+    if provider_type != "claude":
+        from core.ai_clients import create_provider_client
+
+        base_prompt = (
+            f"You are an expert full-stack developer building production-quality software. "
+            f"Your working directory is: {project_dir.resolve()}\n"
+            f"Your filesystem access is RESTRICTED to this directory only. "
+            f"Use relative paths (starting with ./) for all file operations. "
+            f"Never use absolute paths or try to access files outside your working directory.\n\n"
+            f"You follow existing code patterns, write clean maintainable code, and verify "
+            f"your work through thorough testing. You communicate progress through Git commits "
+            f"and build-progress.txt updates."
+        )
+
+        if should_use_claude_md():
+            claude_md_content = load_claude_md(project_dir)
+            if claude_md_content:
+                base_prompt = (
+                    f"{base_prompt}\n\n# Project Instructions (from CLAUDE.md)\n\n{claude_md_content}"
+                )
+
+        return create_provider_client(
+            provider_type=provider_type,
+            model=model,
+            system_prompt=base_prompt,
+            project_dir=project_dir,
+            spec_dir=spec_dir,
+            agent_type=agent_type,
+            max_thinking_tokens=max_thinking_tokens,
+        )
+
     # Collect env vars to pass to SDK (ANTHROPIC_BASE_URL, CLAUDE_CONFIG_DIR, etc.)
     sdk_env = get_sdk_env_vars()
 

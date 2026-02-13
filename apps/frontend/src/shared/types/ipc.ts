@@ -886,6 +886,9 @@ export interface ElectronAPI {
 
   // Multi-CLI Provider API (Claude/Gemini/OpenAI)
   provider: import('../../preload/api/provider-api').ProviderAPI;
+
+  // Smart Routing API
+  routing: import('../../preload/api/routing-api').RoutingAPI;
 }
 
 declare global {

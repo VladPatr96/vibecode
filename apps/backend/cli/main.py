@@ -115,7 +115,15 @@ Environment Variables:
         "--model",
         type=str,
         default=None,
-        help=f"Claude model to use (default: {DEFAULT_MODEL})",
+        help=f"Model to use (default: {DEFAULT_MODEL})",
+    )
+
+    parser.add_argument(
+        "--provider",
+        type=str,
+        default=None,
+        choices=["claude", "gemini", "openai", "codex", "opencode"],
+        help="AI provider to use (default: claude, or AGENT_PROVIDER_TYPE env var)",
     )
 
     parser.add_argument(
@@ -325,7 +333,12 @@ def _run_cli() -> None:
 
     # Get model from CLI arg or env var (None if not explicitly set)
     # This allows get_phase_model() to fall back to task_metadata.json
-    model = args.model or os.environ.get("AUTO_BUILD_MODEL")
+    model = (
+        args.model
+        or os.environ.get("AGENT_PROVIDER_MODEL")
+        or os.environ.get("AUTO_BUILD_MODEL")
+    )
+    provider_type = args.provider or os.environ.get("AGENT_PROVIDER_TYPE", "claude")
 
     # Handle --list command
     if args.list:
@@ -450,6 +463,7 @@ def _run_cli() -> None:
             project_dir=project_dir,
             spec_dir=spec_dir,
             model=model,
+            provider_type=provider_type,
             verbose=args.verbose,
         )
         return
@@ -460,6 +474,7 @@ def _run_cli() -> None:
             project_dir=project_dir,
             spec_dir=spec_dir,
             model=model,
+            provider_type=provider_type,
             verbose=args.verbose,
         )
         return
@@ -469,6 +484,7 @@ def _run_cli() -> None:
         project_dir=project_dir,
         spec_dir=spec_dir,
         model=model,
+        provider_type=provider_type,
         max_iterations=args.max_iterations,
         verbose=args.verbose,
         force_isolated=args.isolated,

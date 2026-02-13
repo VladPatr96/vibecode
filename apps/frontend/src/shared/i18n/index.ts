@@ -16,6 +16,7 @@ import enErrors from './locales/en/errors.json';
 import enChangelog from './locales/en/changelog.json';
 import enRoadmap from './locales/en/roadmap.json';
 import enContext from './locales/en/context.json';
+import enProviders from './locales/en/providers.json';
 
 // Import French translation resources
 import frCommon from './locales/fr/common.json';
@@ -29,6 +30,7 @@ import frGitlab from './locales/fr/gitlab.json';
 import frTaskReview from './locales/fr/taskReview.json';
 import frTerminal from './locales/fr/terminal.json';
 import frErrors from './locales/fr/errors.json';
+import frProviders from './locales/fr/providers.json';
 
 // Import Russian translation resources
 import ruCommon from './locales/ru/common.json';
@@ -45,6 +47,7 @@ import ruErrors from './locales/ru/errors.json';
 import ruChangelog from './locales/ru/changelog.json';
 import ruRoadmap from './locales/ru/roadmap.json';
 import ruContext from './locales/ru/context.json';
+import ruProviders from './locales/ru/providers.json';
 
 export const defaultNS = 'common';
 
@@ -63,7 +66,8 @@ export const resources = {
     errors: enErrors,
     changelog: enChangelog,
     roadmap: enRoadmap,
-    context: enContext
+    context: enContext,
+    providers: enProviders
   },
   fr: {
     common: frCommon,
@@ -76,7 +80,8 @@ export const resources = {
     gitlab: frGitlab,
     taskReview: frTaskReview,
     terminal: frTerminal,
-    errors: frErrors
+    errors: frErrors,
+    providers: frProviders
   },
   ru: {
     common: ruCommon,
@@ -92,7 +97,8 @@ export const resources = {
     errors: ruErrors,
     changelog: ruChangelog,
     roadmap: ruRoadmap,
-    context: ruContext
+    context: ruContext,
+    providers: ruProviders
   }
 } as const;
 
@@ -103,7 +109,7 @@ i18n
     lng: 'en', // Default language (will be overridden by settings)
     fallbackLng: 'en',
     defaultNS,
-    ns: ['common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'gitlab', 'taskReview', 'terminal', 'errors', 'changelog', 'roadmap', 'context'],
+    ns: ['common', 'navigation', 'settings', 'tasks', 'welcome', 'onboarding', 'dialogs', 'gitlab', 'taskReview', 'terminal', 'errors', 'changelog', 'roadmap', 'context', 'providers'],
     interpolation: {
       escapeValue: false // React already escapes values
     },

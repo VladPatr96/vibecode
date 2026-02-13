@@ -19,7 +19,6 @@ import * as TerminalLifecycle from './terminal-lifecycle';
 import * as TerminalEventHandler from './terminal-event-handler';
 import * as ClaudeIntegration from './claude-integration-handler';
 import { debugLog, debugError } from '../../shared/utils/debug-logger';
-import { IPC_CHANNELS } from '../../shared/constants';
 
 export class TerminalManager {
   private terminals: Map<string, TerminalProcess> = new Map();
@@ -174,73 +173,32 @@ export class TerminalManager {
   }
 
   /**
-   * Invoke a CLI provider (Gemini/OpenAI) in a terminal.
-   * For Claude, use invokeClaudeAsync instead (has full profile/OAuth support).
+   * Invoke a CLI provider in a terminal.
    */
   async invokeProvider(
     id: string,
-    providerType: 'gemini' | 'openai',
+    providerType: 'claude' | 'gemini' | 'openai' | 'codex' | 'opencode',
     cwd?: string
   ): Promise<void> {
     const terminal = this.terminals.get(id);
     if (!terminal) {
       return;
     }
-
-    // Import provider registry dynamically to avoid circular deps
-    const { providerRegistry } = await import('../providers/provider-registry');
-    const { ProviderType } = await import('../providers/types');
-
-    const type = providerType === 'gemini' ? ProviderType.GEMINI : ProviderType.OPENAI;
-
-    const provider = await providerRegistry.createForTerminal(
-      id,
-      type,
-      {
-        id: `${providerType}-default`,
-        name: `${providerType} Default`,
-        providerType: type,
-        model: providerType === 'gemini' ? 'gemini-2.0-flash' : 'gpt-4o',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+    await ClaudeIntegration.invokeProvider(
+      terminal,
+      providerType,
+      cwd,
+      this.getWindow,
+      (terminalId, projectPath, startTime) => {
+        SessionHandler.captureClaudeSessionId(
+          terminalId,
+          projectPath,
+          startTime,
+          this.terminals,
+          this.getWindow
+        );
       }
     );
-
-    const cliCommand = provider.getCliCommand();
-    const cliEnv = provider.getCliEnvironment();
-
-    // Set provider type on terminal
-    terminal.providerType = providerType;
-    terminal.isClaudeMode = false; // Not Claude
-
-    // Build env prefix if needed
-    const envParts: string[] = [];
-    for (const [key, value] of Object.entries(cliEnv)) {
-      envParts.push(`${key}=${value}`);
-    }
-
-    // Change directory if needed
-    const cwdCommand = cwd ? `cd ${cwd} && ` : '';
-
-    const envPrefix = envParts.length > 0 ? `${envParts.join(' ')} ` : '';
-    const fullCommand = `${cwdCommand}${envPrefix}${cliCommand.join(' ')}\r`;
-
-    PtyManager.writeToPty(terminal, fullCommand);
-
-    // Update title
-    const displayName = providerType === 'gemini' ? 'Gemini' : 'OpenAI';
-    if (terminal.title.match(/^Terminal \d+$/)) {
-      terminal.title = displayName;
-      const win = this.getWindow();
-      if (win) {
-        win.webContents.send(IPC_CHANNELS.TERMINAL_TITLE_CHANGE, terminal.id, displayName);
-      }
-    }
-
-    // Persist
-    if (terminal.projectPath) {
-      SessionHandler.persistSessionAsync(terminal);
-    }
   }
 
   /**

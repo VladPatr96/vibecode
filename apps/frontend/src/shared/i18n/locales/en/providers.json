@@ -1,0 +1,39 @@
+{
+  "names": {
+    "claude": "Claude Code",
+    "gemini": "Gemini CLI",
+    "openai": "OpenAI Codex",
+    "codex": "Codex CLI",
+    "opencode": "OpenCode CLI"
+  },
+  "status": {
+    "title": "Provider Status",
+    "installed": "Installed",
+    "notInstalled": "Not installed",
+    "authenticated": "Authenticated",
+    "notAuthenticated": "Not authenticated",
+    "rateLimited": "Rate limited",
+    "healthy": "Healthy",
+    "unhealthy": "Unhealthy"
+  },
+  "routing": {
+    "title": "Provider Routing",
+    "description": "Configure provider selection for each phase.",
+    "useForAllPhases": "Use for all phases",
+    "dontShowAgain": "Don't show again",
+    "start": "Start",
+    "cancel": "Cancel"
+  },
+  "settings": {
+    "defaultPlanning": "Planning default provider",
+    "defaultCoding": "Coding default provider",
+    "defaultQa": "QA default provider",
+    "fallbackChains": "Fallback chains",
+    "showConfirmation": "Show confirmation dialog"
+  },
+  "errors": {
+    "loadStatusFailed": "Failed to load provider status",
+    "loadRoutingFailed": "Failed to load routing settings",
+    "saveRoutingFailed": "Failed to save routing settings"
+  }
+}

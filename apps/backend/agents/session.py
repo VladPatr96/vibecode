@@ -8,6 +8,7 @@ memory updates, recovery tracking, and Linear integration.
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from claude_agent_sdk import ClaudeSDKClient
 from debug import debug, debug_detailed, debug_error, debug_section, debug_success
@@ -334,7 +335,7 @@ async def post_session_processing(
 
 
 async def run_agent_session(
-    client: ClaudeSDKClient,
+    client: Any,
     message: str,
     spec_dir: Path,
     verbose: bool = False,
@@ -368,6 +369,14 @@ async def run_agent_session(
         prompt_length=len(message),
         prompt_preview=message[:200] + "..." if len(message) > 200 else message,
     )
+    if hasattr(client, "run_session") and not isinstance(client, ClaudeSDKClient):
+        return await client.run_session(
+            message,
+            spec_dir=spec_dir,
+            verbose=verbose,
+            phase=phase.value,
+        )
+
     print("Sending prompt to Claude Agent SDK...\n")
 
     # Get task logger for this spec

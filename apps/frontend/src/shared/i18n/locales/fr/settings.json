@@ -29,6 +29,14 @@
       "title": "Chemins",
       "description": "Outils CLI et chemins framework"
     },
+    "routing": {
+      "title": "Routage intelligent",
+      "description": "Fournisseurs par défaut par phase"
+    },
+    "providers": {
+      "title": "Profils fournisseurs",
+      "description": "Profils et modèles par fournisseur"
+    },
     "accounts": {
       "title": "Comptes",
       "description": "Comptes Claude & endpoints API"

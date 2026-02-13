@@ -220,6 +220,7 @@ def handle_followup_command(
     project_dir: Path,
     spec_dir: Path,
     model: str,
+    provider_type: str = "claude",
     verbose: bool = False,
 ) -> None:
     """
@@ -229,6 +230,7 @@ def handle_followup_command(
         project_dir: Project root directory
         spec_dir: Spec directory path
         model: Model to use
+        provider_type: Provider type for model execution
         verbose: Enable verbose output
     """
     # Lazy imports to avoid loading heavy modules
@@ -334,6 +336,7 @@ def handle_followup_command(
                 project_dir=project_dir,
                 spec_dir=spec_dir,
                 model=model,
+                provider_type=provider_type,
                 verbose=verbose,
             )
         )

@@ -1,0 +1,39 @@
+{
+  "names": {
+    "claude": "Claude Code",
+    "gemini": "Gemini CLI",
+    "openai": "OpenAI Codex",
+    "codex": "Codex CLI",
+    "opencode": "OpenCode CLI"
+  },
+  "status": {
+    "title": "Statut des fournisseurs",
+    "installed": "Installé",
+    "notInstalled": "Non installé",
+    "authenticated": "Authentifié",
+    "notAuthenticated": "Non authentifié",
+    "rateLimited": "Limité",
+    "healthy": "Sain",
+    "unhealthy": "En erreur"
+  },
+  "routing": {
+    "title": "Routage des fournisseurs",
+    "description": "Configurez le fournisseur pour chaque phase.",
+    "useForAllPhases": "Utiliser pour toutes les phases",
+    "dontShowAgain": "Ne plus afficher",
+    "start": "Démarrer",
+    "cancel": "Annuler"
+  },
+  "settings": {
+    "defaultPlanning": "Fournisseur par défaut (planification)",
+    "defaultCoding": "Fournisseur par défaut (codage)",
+    "defaultQa": "Fournisseur par défaut (QA)",
+    "fallbackChains": "Chaînes de secours",
+    "showConfirmation": "Afficher la boîte de confirmation"
+  },
+  "errors": {
+    "loadStatusFailed": "Échec du chargement du statut des fournisseurs",
+    "loadRoutingFailed": "Échec du chargement du routage",
+    "saveRoutingFailed": "Échec de l'enregistrement du routage"
+  }
+}

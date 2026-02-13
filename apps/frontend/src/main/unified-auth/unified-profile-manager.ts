@@ -17,6 +17,9 @@ import type {
 import { DEFAULT_AUTO_SWITCH_SETTINGS } from './types';
 import { loadUnifiedStore, saveUnifiedStore, createDefaultUnifiedStore } from './profile-store';
 import { ClaudeAuthAdapter } from './adapters/claude-adapter';
+import { GeminiAuthAdapter } from './adapters/gemini-adapter';
+import { CodexAuthAdapter } from './adapters/codex-adapter';
+import { OpencodeAuthAdapter } from './adapters/opencode-adapter';
 
 const STORE_FILENAME = 'unified-profiles.json';
 
@@ -31,6 +34,9 @@ export class UnifiedProfileManager {
 
     // Register the built-in Claude adapter by default
     this.registerAdapter(new ClaudeAuthAdapter());
+    this.registerAdapter(new GeminiAuthAdapter());
+    this.registerAdapter(new CodexAuthAdapter());
+    this.registerAdapter(new OpencodeAuthAdapter());
   }
 
   /**

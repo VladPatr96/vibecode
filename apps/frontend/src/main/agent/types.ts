@@ -50,6 +50,11 @@ export interface TaskExecutionOptions {
   workers?: number;
   baseBranch?: string;
   useWorktree?: boolean; // If false, use --direct mode (no worktree isolation)
+  routingConfig?: {
+    planning?: { provider: string; model: string };
+    coding?: { provider: string; model: string };
+    qa?: { provider: string; model: string };
+  };
 }
 
 export interface SpecCreationMetadata {

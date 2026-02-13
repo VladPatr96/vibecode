@@ -10,6 +10,7 @@ Memory Integration:
 """
 
 from pathlib import Path
+from typing import Any
 
 # Memory integration for cross-session learning
 from agents.memory_manager import get_graphiti_context, save_session_memory
@@ -47,7 +48,7 @@ def load_qa_fixer_prompt() -> str:
 
 
 async def run_qa_fixer_session(
-    client: ClaudeSDKClient,
+    client: Any,
     spec_dir: Path,
     fix_session: int,
     verbose: bool = False,
@@ -122,6 +123,21 @@ async def run_qa_fixer_session(
     prompt += f"**Spec Name**: {spec_dir.name}\n"
     prompt += f"\n**IMPORTANT**: All spec files are located in: `{spec_dir}/`\n"
     prompt += f"The fix request file is at: `{spec_dir}/QA_FIX_REQUEST.md`\n"
+
+    if hasattr(client, "run_session") and not isinstance(client, ClaudeSDKClient):
+        status, response_text, error_info = await client.run_session(
+            prompt,
+            spec_dir=spec_dir,
+            verbose=verbose,
+            phase="qa_fixing",
+        )
+        if status == "error":
+            return "error", error_info.get("message", response_text)
+
+        signoff = get_qa_signoff_status(spec_dir)
+        if signoff and signoff.get("ready_for_qa_revalidation"):
+            return "fixed", response_text
+        return "fixed", response_text
 
     try:
         debug("qa_fixer", "Sending query to Claude SDK...")

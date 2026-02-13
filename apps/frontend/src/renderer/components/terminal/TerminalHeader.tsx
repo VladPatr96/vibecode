@@ -1,8 +1,8 @@
-import { X, Sparkles, TerminalSquare, FolderGit, ExternalLink, GripVertical, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
+import { X, Sparkles, TerminalSquare, FolderGit, ExternalLink, GripVertical, Maximize2, Minimize2, RotateCcw, Bot, Brain, Code2, Cpu, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import type { Task, TerminalWorktreeConfig } from '../../../shared/types';
-import { PROVIDER_DISPLAY_NAMES } from '../../../shared/types';
+import { DEFAULT_MODELS, PROVIDER_COLORS, PROVIDER_DISPLAY_NAMES } from '../../../shared/types';
 import type { TerminalStatus } from '../../stores/terminal-store';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
@@ -74,6 +74,17 @@ export function TerminalHeader({
 }: TerminalHeaderProps) {
   const { t } = useTranslation(['terminal', 'common']);
   const backlogTasks = tasks.filter((t) => t.status === 'backlog');
+  const badgeProvider = providerType || (isClaudeMode ? 'claude' : undefined);
+
+  const ProviderIcon = badgeProvider === 'gemini'
+    ? Brain
+    : badgeProvider === 'openai'
+      ? Bot
+      : badgeProvider === 'codex'
+        ? Code2
+        : badgeProvider === 'opencode'
+          ? Wrench
+          : Cpu;
 
   return (
     <div className="electron-no-drag group/header flex h-9 items-center justify-between border-b border-border/50 bg-card/30 px-2">
@@ -104,18 +115,17 @@ export function TerminalHeader({
             terminalCount={terminalCount}
           />
         </div>
-        {(isClaudeMode || providerType) && (
+        {badgeProvider && (
           <span
             className={cn(
               'flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded',
-              providerType === 'gemini' ? 'text-blue-400 bg-blue-400/10'
-                : providerType === 'openai' ? 'text-green-400 bg-green-400/10'
-                : 'text-primary bg-primary/10'
+              PROVIDER_COLORS[badgeProvider],
+              'bg-muted/40 border border-border'
             )}
-            title={providerType ? PROVIDER_DISPLAY_NAMES[providerType] : 'Claude'}
+            title={`${PROVIDER_DISPLAY_NAMES[badgeProvider]} (${DEFAULT_MODELS[badgeProvider]})`}
           >
-            <Sparkles className="h-2.5 w-2.5" />
-            {terminalCount < 4 && <span>{providerType ? PROVIDER_DISPLAY_NAMES[providerType] : 'Claude'}</span>}
+            <ProviderIcon className="h-2.5 w-2.5" />
+            {terminalCount < 4 && <span>{PROVIDER_DISPLAY_NAMES[badgeProvider]}</span>}
           </span>
         )}
         {pendingClaudeResume && (

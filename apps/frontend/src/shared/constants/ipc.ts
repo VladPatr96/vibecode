@@ -76,6 +76,10 @@ export const IPC_CHANNELS = {
   // Provider operations (multi-CLI support)
   PROVIDER_LIST: 'provider:list',
   PROVIDER_HEALTH_CHECK: 'provider:healthCheck',
+  PROVIDER_GET_STATUS: 'provider:getStatus',
+  ROUTING_ANALYZE_TASK: 'routing:analyzeTask',
+  ROUTING_GET_DEFAULTS: 'routing:getDefaults',
+  ROUTING_SAVE_DEFAULTS: 'routing:saveDefaults',
 
   TERMINAL_GENERATE_NAME: 'terminal:generateName',
   TERMINAL_SET_TITLE: 'terminal:setTitle',  // Renderer -> Main: user renamed terminal

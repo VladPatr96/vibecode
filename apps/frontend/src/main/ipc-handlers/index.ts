@@ -35,6 +35,7 @@ import { registerProfileHandlers } from './profile-handlers';
 import { registerScreenshotHandlers } from './screenshot-handlers';
 import { registerTerminalWorktreeIpcHandlers } from './terminal';
 import { registerProviderHandlers } from './provider-handlers';
+import { registerRoutingHandlers } from './routing-handlers';
 import { notificationService } from '../notification-service';
 
 /**
@@ -124,7 +125,10 @@ export function setupIpcHandlers(
   registerScreenshotHandlers();
 
   // Provider handlers (multi-CLI support: Claude/Gemini/OpenAI)
-  registerProviderHandlers(terminalManager, getMainWindow);
+  registerProviderHandlers(terminalManager);
+
+  // Smart routing handlers
+  registerRoutingHandlers();
 
   console.warn('[IPC] All handler modules registered successfully');
 }
@@ -154,5 +158,6 @@ export {
   registerMcpHandlers,
   registerProfileHandlers,
   registerScreenshotHandlers,
-  registerProviderHandlers
+  registerProviderHandlers,
+  registerRoutingHandlers
 };

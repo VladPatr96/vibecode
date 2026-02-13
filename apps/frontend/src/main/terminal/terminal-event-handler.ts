@@ -14,10 +14,12 @@ import { IPC_CHANNELS } from '../../shared/constants';
 export interface EventHandlerCallbacks {
   onClaudeSessionId: (terminal: TerminalProcess, sessionId: string) => void;
   onRateLimit: (terminal: TerminalProcess, data: string) => void;
+  onProviderRateLimit: (terminal: TerminalProcess, data: string) => void;
   onOAuthToken: (terminal: TerminalProcess, data: string) => void;
   onOnboardingComplete: (terminal: TerminalProcess, data: string) => void;
   onClaudeBusyChange: (terminal: TerminalProcess, isBusy: boolean) => void;
   onClaudeExit: (terminal: TerminalProcess) => void;
+  onProviderExit: (terminal: TerminalProcess) => void;
 }
 
 // Track the last known busy state per terminal to avoid duplicate events
@@ -42,6 +44,10 @@ export function handleTerminalData(
   // Check for rate limit messages
   if (terminal.isClaudeMode) {
     callbacks.onRateLimit(terminal, data);
+  } else if (terminal.providerType && terminal.providerType !== 'claude') {
+    if (OutputParser.hasProviderRateLimitMessage(data, terminal.providerType)) {
+      callbacks.onProviderRateLimit(terminal, data);
+    }
   }
 
   // Check for OAuth token
@@ -70,6 +76,10 @@ export function handleTerminalData(
       callbacks.onClaudeExit(terminal);
       // Clear busy state tracking since Claude has exited
       lastBusyState.delete(terminal.id);
+    }
+  } else if (terminal.providerType && terminal.providerType !== 'claude') {
+    if (OutputParser.detectProviderExit(data, terminal.providerType)) {
+      callbacks.onProviderExit(terminal);
     }
   }
 }
@@ -102,6 +112,18 @@ export function createEventCallbacks(
         switchProfileCallback
       );
     },
+    onProviderRateLimit: (terminal, _data) => {
+      const win = getWindow();
+      if (win && terminal.providerType) {
+        win.webContents.send(IPC_CHANNELS.TERMINAL_RATE_LIMIT, {
+          terminalId: terminal.id,
+          resetTime: 'Provider rate limit reached',
+          detectedAt: new Date().toISOString(),
+          profileId: `${terminal.providerType}-default`,
+          autoSwitchEnabled: false
+        });
+      }
+    },
     onOAuthToken: (terminal, data) => {
       ClaudeIntegration.handleOAuthToken(terminal, data, getWindow);
     },
@@ -116,6 +138,9 @@ export function createEventCallbacks(
     },
     onClaudeExit: (terminal) => {
       ClaudeIntegration.handleClaudeExit(terminal, getWindow);
+    },
+    onProviderExit: (terminal) => {
+      ClaudeIntegration.handleProviderExit(terminal, getWindow);
     }
   };
 }

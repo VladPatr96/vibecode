@@ -83,6 +83,7 @@ async def run_autonomous_agent(
     max_iterations: int | None = None,
     verbose: bool = False,
     source_spec_dir: Path | None = None,
+    provider_type: str = "claude",
 ) -> None:
     """
     Run the autonomous agent loop with automatic memory management.
@@ -97,6 +98,7 @@ async def run_autonomous_agent(
         max_iterations: Maximum number of iterations (None for unlimited)
         verbose: Whether to show detailed output
         source_spec_dir: Original spec directory in main project (for syncing from worktree)
+        provider_type: Provider type for model execution (claude by default)
     """
     # Set environment variable for security hooks to find the correct project directory
     # This is needed because os.getcwd() may return the wrong directory in worktree mode
@@ -309,6 +311,7 @@ async def run_autonomous_agent(
             spec_dir,
             phase_model,
             agent_type="planner" if first_run else "coder",
+            provider_type=provider_type,
             max_thinking_tokens=phase_thinking_budget,
         )
 

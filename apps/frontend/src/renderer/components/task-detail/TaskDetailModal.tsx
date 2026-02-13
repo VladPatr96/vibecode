@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { calculateProgress } from '../../lib/utils';
-import { startTask, stopTask, submitReview, recoverStuckTask, deleteTask, useTaskStore } from '../../stores/task-store';
+import { stopTask, submitReview, recoverStuckTask, deleteTask, useTaskStore } from '../../stores/task-store';
 import { TASK_STATUS_LABELS } from '../../../shared/constants';
 import { TaskEditDialog } from '../TaskEditDialog';
 import { useTaskDetail } from './hooks/useTaskDetail';
@@ -42,6 +42,8 @@ import { TaskSubtasks } from './TaskSubtasks';
 import { TaskLogs } from './TaskLogs';
 import { TaskFiles } from './TaskFiles';
 import { TaskReview } from './TaskReview';
+import { ProviderRoutingDialog } from '../routing/ProviderRoutingDialog';
+import { useTaskRoutingLaunch } from '../../hooks/use-task-routing-launch';
 import type { Task, WorktreeCreatePROptions } from '../../../shared/types';
 
 interface TaskDetailModalProps {
@@ -80,6 +82,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
   const { t } = useTranslation(['tasks']);
   const { toast } = useToast();
   const state = useTaskDetail({ task });
+  const routingLaunch = useTaskRoutingLaunch(task);
   const showFilesTab = isFilesTabEnabled();
   const progressPercent = calculateProgress(task.subtasks);
   const completedSubtasks = task.subtasks.filter(s => s.status === 'completed').length;
@@ -103,7 +106,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
           return;
         }
       }
-      startTask(task.id);
+      await routingLaunch.startWithRouting();
     }
   };
 
@@ -654,6 +657,16 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ProviderRoutingDialog
+        open={routingLaunch.dialogOpen}
+        recommendation={routingLaunch.recommendation}
+        providerHealth={routingLaunch.providerHealth}
+        onCancel={routingLaunch.cancel}
+        onStart={(phases, options) => {
+          void routingLaunch.confirm(phases, options);
+        }}
+      />
     </TooltipProvider>
   );
 }

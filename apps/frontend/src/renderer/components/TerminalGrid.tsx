@@ -258,21 +258,33 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
     }
   }, [addTerminal, canAddTerminal, projectPath]);
 
-  const handleCreateProviderTerminal = useCallback((providerType: import('../../shared/types').ProviderType, _profile: import('../../shared/types').ProviderProfile) => {
+  const handleCreateProviderTerminal = useCallback(async (providerType: import('../../shared/types').ProviderType, _profile: import('../../shared/types').ProviderProfile) => {
     if (!canAddTerminal(projectPath)) return;
     const terminal = addTerminal(projectPath, projectPath);
-    if (terminal && providerType !== 'claude') {
-      // Set provider type in store
-      useTerminalStore.getState().setTerminalProvider(terminal.id, providerType);
-      // Invoke the provider CLI
-      window.electronAPI.provider.invokeProviderInTerminal(terminal.id, providerType, { cwd: projectPath });
-    } else if (terminal && providerType === 'claude') {
-      // For Claude, use the existing invoke
-      useTerminalStore.getState().setClaudeMode(terminal.id, true);
-      window.electronAPI.invokeClaudeInTerminal(terminal.id, projectPath);
+    if (!terminal) return;
+
+    try {
+      if (providerType !== 'claude') {
+        // Set provider type in store
+        useTerminalStore.getState().setTerminalProvider(terminal.id, providerType);
+        // Invoke the provider CLI
+        const result = await window.electronAPI.provider.invokeProviderInTerminal(terminal.id, providerType, { cwd: projectPath });
+        if (!result.success) {
+          throw new Error(result.error || `Failed to launch ${providerType}`);
+        }
+      } else {
+        // For Claude, use the existing invoke
+        useTerminalStore.getState().setClaudeMode(terminal.id, true);
+        window.electronAPI.invokeClaudeInTerminal(terminal.id, projectPath);
+      }
+    } catch (error) {
+      await window.electronAPI.destroyTerminal(terminal.id).catch(() => undefined);
+      removeTerminal(terminal.id);
+      console.error('[TerminalGrid] Failed to create provider terminal:', error);
+    } finally {
+      setShowNewTerminalDialog(false);
     }
-    setShowNewTerminalDialog(false);
-  }, [addTerminal, canAddTerminal, projectPath]);
+  }, [addTerminal, canAddTerminal, projectPath, removeTerminal]);
 
   // Toggle terminal expand state
   const handleToggleExpand = useCallback((terminalId: string) => {

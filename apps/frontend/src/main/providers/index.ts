@@ -10,6 +10,8 @@ export { providerRegistry } from './provider-registry';
 import { ClaudeCLIProvider } from './claude';
 import { GeminiCLIProvider } from './gemini';
 import { OpenAICLIProvider } from './openai';
+import { CodexCLIProvider } from './codex';
+import { OpencodeCLIProvider } from './opencode';
 import { providerRegistry } from './provider-registry';
 import { ProviderType } from './types';
 
@@ -17,7 +19,11 @@ import { ProviderType } from './types';
 providerRegistry.register(ProviderType.CLAUDE, () => ClaudeCLIProvider.create());
 providerRegistry.register(ProviderType.GEMINI, () => GeminiCLIProvider.create());
 providerRegistry.register(ProviderType.OPENAI, () => OpenAICLIProvider.create());
+providerRegistry.register(ProviderType.CODEX, () => CodexCLIProvider.create());
+providerRegistry.register(ProviderType.OPENCODE, () => OpencodeCLIProvider.create());
 
 export { ClaudeCLIProvider } from './claude';
 export { GeminiCLIProvider } from './gemini';
 export { OpenAICLIProvider } from './openai';
+export { CodexCLIProvider } from './codex';
+export { OpencodeCLIProvider } from './opencode';

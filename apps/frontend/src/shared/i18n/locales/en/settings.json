@@ -29,6 +29,14 @@
       "title": "Paths",
       "description": "CLI tools and framework paths"
     },
+    "routing": {
+      "title": "Smart Routing",
+      "description": "Provider defaults per execution phase"
+    },
+    "providers": {
+      "title": "Provider Profiles",
+      "description": "Profiles and models per provider"
+    },
     "accounts": {
       "title": "Accounts",
       "description": "Claude accounts & API endpoints"

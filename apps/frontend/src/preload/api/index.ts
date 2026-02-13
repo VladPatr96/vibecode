@@ -16,6 +16,7 @@ import { ProfileAPI, createProfileAPI } from './profile-api';
 import { ScreenshotAPI, createScreenshotAPI } from './screenshot-api';
 import { QueueAPI, createQueueAPI } from './queue-api';
 import { ProviderAPI, createProviderAPI } from './provider-api';
+import { RoutingAPI, createRoutingAPI } from './routing-api';
 
 export interface ElectronAPI extends
   ProjectAPI,
@@ -38,6 +39,8 @@ export interface ElectronAPI extends
   queue: QueueAPI;
   /** Multi-CLI provider API */
   provider: ProviderAPI;
+  /** Smart provider routing API */
+  routing: RoutingAPI;
 }
 
 export const createElectronAPI = (): ElectronAPI => ({
@@ -55,7 +58,8 @@ export const createElectronAPI = (): ElectronAPI => ({
   ...createScreenshotAPI(),
   github: createGitHubAPI(),
   queue: createQueueAPI(),  // Queue routing for rate limit recovery
-  provider: createProviderAPI()  // Multi-CLI provider API
+  provider: createProviderAPI(),  // Multi-CLI provider API
+  routing: createRoutingAPI()
 });
 
 // Export individual API creators for potential use in tests or specialized contexts
@@ -75,7 +79,8 @@ export {
   createMcpAPI,
   createScreenshotAPI,
   createQueueAPI,
-  createProviderAPI
+  createProviderAPI,
+  createRoutingAPI
 };
 
 export type {
@@ -96,5 +101,6 @@ export type {
   McpAPI,
   ScreenshotAPI,
   QueueAPI,
-  ProviderAPI
+  ProviderAPI,
+  RoutingAPI
 };

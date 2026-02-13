@@ -14,6 +14,13 @@ from .pattern_discovery import PatternDiscoverer
 from .search import CodeSearcher
 from .serialization import load_context, save_context, serialize_context
 from .service_matcher import ServiceMatcher
+from .cross_provider_context import (
+    PhaseHandoff,
+    build_handoff_prompt,
+    create_phase_handoff,
+    load_context_lineage,
+    save_context_lineage,
+)
 
 __all__ = [
     # Main builder
@@ -34,4 +41,10 @@ __all__ = [
     "serialize_context",
     "save_context",
     "load_context",
+    # Cross-provider handoff
+    "PhaseHandoff",
+    "build_handoff_prompt",
+    "create_phase_handoff",
+    "load_context_lineage",
+    "save_context_lineage",
 ]

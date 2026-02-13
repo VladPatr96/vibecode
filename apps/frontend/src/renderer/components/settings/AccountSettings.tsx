@@ -43,6 +43,7 @@ import { SettingsSection } from './SettingsSection';
 import { AuthTerminal } from './AuthTerminal';
 import { ProfileEditDialog } from './ProfileEditDialog';
 import { AccountPriorityList, type UnifiedAccount } from './AccountPriorityList';
+import { ProviderStatusPanel } from '../providers/ProviderStatusPanel';
 import { maskApiKey } from '../../lib/profile-utils';
 import { loadClaudeProfiles as loadGlobalClaudeProfiles } from '../../stores/claude-profile-store';
 import { useSettingsStore } from '../../stores/settings-store';
@@ -1267,6 +1268,10 @@ export function AccountSettings({ settings, onSettingsChange, isOpen }: AccountS
             </div>
           </TabsContent>
         </Tabs>
+
+        <div className="space-y-4 pt-6 border-t border-border">
+          <ProviderStatusPanel />
+        </div>
 
         {/* Auto-Switch Settings Section - Persistent below tabs */}
         {totalAccounts > 1 && (

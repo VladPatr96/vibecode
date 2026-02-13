@@ -1,0 +1,39 @@
+{
+  "names": {
+    "claude": "Claude Code",
+    "gemini": "Gemini CLI",
+    "openai": "OpenAI Codex",
+    "codex": "Codex CLI",
+    "opencode": "OpenCode CLI"
+  },
+  "status": {
+    "title": "Статус провайдеров",
+    "installed": "Установлен",
+    "notInstalled": "Не установлен",
+    "authenticated": "Авторизован",
+    "notAuthenticated": "Не авторизован",
+    "rateLimited": "Лимит достигнут",
+    "healthy": "Доступен",
+    "unhealthy": "Недоступен"
+  },
+  "routing": {
+    "title": "Маршрутизация провайдеров",
+    "description": "Настройте провайдера для каждой фазы.",
+    "useForAllPhases": "Использовать для всех фаз",
+    "dontShowAgain": "Больше не показывать",
+    "start": "Старт",
+    "cancel": "Отмена"
+  },
+  "settings": {
+    "defaultPlanning": "Провайдер по умолчанию для планирования",
+    "defaultCoding": "Провайдер по умолчанию для кодинга",
+    "defaultQa": "Провайдер по умолчанию для QA",
+    "fallbackChains": "Цепочки fallback",
+    "showConfirmation": "Показывать диалог подтверждения"
+  },
+  "errors": {
+    "loadStatusFailed": "Не удалось загрузить статус провайдеров",
+    "loadRoutingFailed": "Не удалось загрузить настройки маршрутизации",
+    "saveRoutingFailed": "Не удалось сохранить настройки маршрутизации"
+  }
+}

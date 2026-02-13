@@ -13,6 +13,8 @@ describe('Provider Registry', () => {
     expect(available).toContain(ProviderType.CLAUDE);
     expect(available).toContain(ProviderType.GEMINI);
     expect(available).toContain(ProviderType.OPENAI);
+    expect(available).toContain(ProviderType.CODEX);
+    expect(available).toContain(ProviderType.OPENCODE);
   });
 
   it('should create provider for terminal', async () => {

@@ -15,6 +15,7 @@ import {
 } from './ui/dropdown-menu';
 import { cn, formatRelativeTime, sanitizeMarkdownForDisplay } from '../lib/utils';
 import { PhaseProgressIndicator } from './PhaseProgressIndicator';
+import { ProviderRoutingDialog } from './routing/ProviderRoutingDialog';
 import {
   TASK_CATEGORY_LABELS,
   TASK_CATEGORY_COLORS,
@@ -32,6 +33,7 @@ import {
   JSON_ERROR_TITLE_SUFFIX
 } from '../../shared/constants';
 import { startTask, stopTask, checkTaskRunning, recoverStuckTask, isIncompleteHumanReview, archiveTasks, hasRecentActivity } from '../stores/task-store';
+import { useTaskRoutingLaunch } from '../hooks/use-task-routing-launch';
 import type { Task, TaskCategory, ReviewReason, TaskStatus } from '../../shared/types';
 
 // Category icon mapping
@@ -139,6 +141,7 @@ export const TaskCard = memo(function TaskCard({
   const isRunning = task.status === 'in_progress';
   const executionPhase = task.executionProgress?.phase;
   const hasActiveExecution = executionPhase && executionPhase !== 'idle' && executionPhase !== 'complete' && executionPhase !== 'failed';
+  const routingLaunch = useTaskRoutingLaunch(task);
 
   // Check if task is in human_review but has no completed subtasks (crashed/incomplete)
   const isIncomplete = isIncompleteHumanReview(task);
@@ -228,7 +231,7 @@ export const TaskCard = memo(function TaskCard({
     if (isRunning && !isStuck) {
       stopTask(task.id);
     } else {
-      startTask(task.id);
+      void routingLaunch.startWithRouting();
     }
   };
 
@@ -315,6 +318,7 @@ export const TaskCard = memo(function TaskCard({
   const isArchived = !!task.metadata?.archivedAt;
 
   return (
+    <>
     <Card
       className={cn(
         'card-surface task-card-enhanced cursor-pointer',
@@ -622,5 +626,15 @@ export const TaskCard = memo(function TaskCard({
         </div>
       </CardContent>
     </Card>
+    <ProviderRoutingDialog
+      open={routingLaunch.dialogOpen}
+      recommendation={routingLaunch.recommendation}
+      providerHealth={routingLaunch.providerHealth}
+      onCancel={routingLaunch.cancel}
+      onStart={(phases, options) => {
+        void routingLaunch.confirm(phases, options);
+      }}
+    />
+    </>
   );
 }, taskCardPropsAreEqual);

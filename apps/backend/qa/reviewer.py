@@ -11,6 +11,7 @@ Memory Integration:
 """
 
 from pathlib import Path
+from typing import Any
 
 # Memory integration for cross-session learning
 from agents.memory_manager import get_graphiti_context, save_session_memory
@@ -32,7 +33,7 @@ from .criteria import get_qa_signoff_status
 
 
 async def run_qa_agent_session(
-    client: ClaudeSDKClient,
+    client: Any,
     project_dir: Path,
     spec_dir: Path,
     qa_session: int,
@@ -182,6 +183,29 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
         print(
             f"\n⚠️  Retry with self-correction context (attempt {previous_error.get('consecutive_errors', 1) + 1})"
         )
+
+    if hasattr(client, "run_session") and not isinstance(client, ClaudeSDKClient):
+        status, response_text, error_info = await client.run_session(
+            prompt,
+            spec_dir=spec_dir,
+            verbose=verbose,
+            phase="qa_review",
+        )
+        if status == "error":
+            return "error", error_info.get("message", response_text)
+
+        qa_status = get_qa_signoff_status(spec_dir)
+        if qa_status and qa_status.get("status") == "approved":
+            return "approved", response_text
+        if qa_status and qa_status.get("status") == "rejected":
+            return "rejected", response_text
+
+        lower_response = response_text.lower()
+        if "approved" in lower_response and "rejected" not in lower_response:
+            return "approved", response_text
+        if "rejected" in lower_response or "issue" in lower_response:
+            return "rejected", response_text
+        return "error", "QA agent did not update implementation_plan.json"
 
     try:
         debug("qa_reviewer", "Sending query to Claude SDK...")

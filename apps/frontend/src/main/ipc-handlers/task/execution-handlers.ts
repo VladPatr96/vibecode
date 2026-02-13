@@ -112,7 +112,7 @@ export function registerTaskExecutionHandlers(
    */
   ipcMain.on(
     IPC_CHANNELS.TASK_START,
-    async (_, taskId: string, _options?: TaskStartOptions) => {
+    async (_, taskId: string, options?: TaskStartOptions) => {
       console.warn('[TASK_START] Received request for taskId:', taskId);
       const mainWindow = getMainWindow();
       if (!mainWindow) {
@@ -268,7 +268,8 @@ export function registerTaskExecutionHandlers(
             parallel: false,  // Sequential for planning phase
             workers: 1,
             baseBranch,
-            useWorktree: task.metadata?.useWorktree
+            useWorktree: task.metadata?.useWorktree,
+            routingConfig: options?.routingConfig
           }
         );
       } else {
@@ -284,7 +285,8 @@ export function registerTaskExecutionHandlers(
             parallel: false,
             workers: 1,
             baseBranch,
-            useWorktree: task.metadata?.useWorktree
+            useWorktree: task.metadata?.useWorktree,
+            routingConfig: options?.routingConfig
           }
         );
       }

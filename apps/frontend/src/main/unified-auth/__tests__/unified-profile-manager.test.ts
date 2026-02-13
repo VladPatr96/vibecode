@@ -148,8 +148,8 @@ describe('UnifiedProfileManager', () => {
     expect(retrieved).toBe(adapter);
     expect(retrieved!.providerType).toBe('gemini');
 
-    // Unknown provider returns undefined
-    expect(manager.getAdapter('codex')).toBeUndefined();
+    expect(manager.getAdapter('codex')).toBeDefined();
+    expect(manager.getAdapter('opencode')).toBeDefined();
   });
 
   it('manages auto-switch settings per provider', async () => {

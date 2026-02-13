@@ -3,6 +3,8 @@
  * Handles parsing and pattern detection in terminal output
  */
 
+import type { ProviderType } from '../../shared/types/provider';
+
 /**
  * Regex patterns to capture Claude session ID from output
  */
@@ -18,6 +20,44 @@ const CLAUDE_SESSION_PATTERNS = [
  * Matches: "Limit reached · resets Dec 17 at 6am (Europe/Oslo)"
  */
 const RATE_LIMIT_PATTERN = /Limit reached\s*[·•]\s*resets\s+(.+?)$/m;
+
+/**
+ * Provider-specific output patterns for non-Claude CLIs.
+ * Used for rate limit and auth/session detection in multi-provider terminals.
+ */
+interface ProviderPatternSet {
+  rateLimit: RegExp[];
+  authPrompts: RegExp[];
+  sessionReady: RegExp[];
+}
+
+const PROVIDER_PATTERNS: Record<ProviderType, ProviderPatternSet> = {
+  claude: {
+    rateLimit: [RATE_LIMIT_PATTERN],
+    authPrompts: [/\/login/i, /authorize/i, /oauth/i],
+    sessionReady: [/^>\s*$/m, /Claude Code v\d+\.\d+/i],
+  },
+  gemini: {
+    rateLimit: [/quota exceeded/i, /RESOURCE_EXHAUSTED/i, /\b429\b/, /gemini:\s*error/i],
+    authPrompts: [/gemini\s+login/i, /authenticate/i, /oauth/i],
+    sessionReady: [/gemini/i, /ready/i],
+  },
+  openai: {
+    rateLimit: [/rate limit/i, /\b429\b/, /openai:\s*error/i],
+    authPrompts: [/openai/i, /api[_ -]?key/i, /login/i],
+    sessionReady: [/openai/i, /ready/i],
+  },
+  codex: {
+    rateLimit: [/rate limit/i, /\b429\b/, /openai:\s*error/i, /codex:\s*error/i],
+    authPrompts: [/codex\s+login/i, /api[_ -]?key/i, /authenticate/i],
+    sessionReady: [/codex/i, /ready/i],
+  },
+  opencode: {
+    rateLimit: [/rate limit/i, /API error/i, /\b429\b/, /opencode:\s*error/i],
+    authPrompts: [/opencode\s+login/i, /api[_ -]?key/i, /authenticate/i],
+    sessionReady: [/opencode/i, /ready/i],
+  },
+};
 
 /**
  * Regex pattern to capture OAuth token from Claude CLI output
@@ -73,6 +113,34 @@ export function extractClaudeSessionId(data: string): string | null {
 export function extractRateLimitReset(data: string): string | null {
   const match = data.match(RATE_LIMIT_PATTERN);
   return match ? match[1].trim() : null;
+}
+
+/**
+ * Get output pattern set for a provider.
+ */
+export function getProviderPatterns(providerType: ProviderType): ProviderPatternSet {
+  return PROVIDER_PATTERNS[providerType];
+}
+
+/**
+ * Check if output contains a provider-specific rate limit message.
+ */
+export function hasProviderRateLimitMessage(data: string, providerType: ProviderType): boolean {
+  return getProviderPatterns(providerType).rateLimit.some((pattern) => pattern.test(data));
+}
+
+/**
+ * Check if output contains a provider-specific auth prompt.
+ */
+export function hasProviderAuthPrompt(data: string, providerType: ProviderType): boolean {
+  return getProviderPatterns(providerType).authPrompts.some((pattern) => pattern.test(data));
+}
+
+/**
+ * Check if output contains provider-specific session-ready indicators.
+ */
+export function hasProviderSessionReady(data: string, providerType: ProviderType): boolean {
+  return getProviderPatterns(providerType).sessionReady.some((pattern) => pattern.test(data));
 }
 
 /**
@@ -371,4 +439,22 @@ export function detectClaudeExit(data: string): boolean {
 
   // Check for Claude exit patterns (shell prompt return)
   return isClaudeExitOutput(data);
+}
+
+/**
+ * Detect if a provider CLI has exited and shell is ready.
+ * Claude keeps its dedicated behavior; other providers use shell prompt detection.
+ */
+export function detectProviderExit(data: string, providerType: ProviderType): boolean {
+  if (providerType === 'claude') {
+    return detectClaudeExit(data);
+  }
+
+  const shellPromptPatterns = [
+    /[$%#>❯]\s*$/m,
+    /\w+@[\w.-]+[:\s]/,
+    /^\s*\S+\s*[$%#>❯]\s*$/m,
+    /\(.*\)\s*[$%#>❯]\s*$/m,
+  ];
+  return shellPromptPatterns.some((pattern) => pattern.test(data));
 }

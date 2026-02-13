@@ -227,6 +227,12 @@ export class AgentManager extends EventEmitter {
     // Get combined environment variables
     const combinedEnv = this.processManager.getCombinedEnv(projectPath);
 
+    if (options.routingConfig?.coding) {
+      combinedEnv.AGENT_PROVIDER_TYPE = options.routingConfig.coding.provider;
+      combinedEnv.AGENT_PROVIDER_MODEL = options.routingConfig.coding.model;
+    }
+    this.processManager.configureTaskRouting(taskId, options.routingConfig);
+
     const args = [runPath, '--spec', specId, '--project-dir', projectPath];
 
     // Always use auto-continue when running from UI (non-interactive)

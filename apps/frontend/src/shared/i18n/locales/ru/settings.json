@@ -29,6 +29,14 @@
       "title": "Пути",
       "description": "Пути к CLI-инструментам и фреймворку"
     },
+    "routing": {
+      "title": "Умная маршрутизация",
+      "description": "Провайдеры по умолчанию для фаз выполнения"
+    },
+    "providers": {
+      "title": "Профили провайдеров",
+      "description": "Профили и модели для каждого провайдера"
+    },
     "accounts": {
       "title": "Аккаунты",
       "description": "Аккаунты Claude и API endpoints"

@@ -67,6 +67,14 @@ export function registerTerminalHandlers(
     (_, id: string, cwd?: string) => {
       // Wrap in async IIFE to allow async settings read without blocking
       (async () => {
+        const terminal = terminalManager.getTerminal(id);
+        const providerType = terminal?.providerType ?? 'claude';
+
+        if (providerType !== 'claude') {
+          await terminalManager.invokeProvider(id, providerType, cwd);
+          return;
+        }
+
         // Read settings asynchronously to check for YOLO mode (dangerously skip permissions)
         const settings = await readSettingsFileAsync();
         const dangerouslySkipPermissions = settings?.dangerouslySkipPermissions === true;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   detectClaudeExit,
+  detectProviderExit,
   isClaudeExitOutput,
   isClaudeBusyOutput,
   isClaudeIdleOutput,
@@ -9,8 +10,10 @@ import {
   extractRateLimitReset,
   extractOAuthToken,
   extractEmail,
+  getProviderPatterns,
   hasRateLimitMessage,
   hasOAuthToken,
+  hasProviderRateLimitMessage,
 } from '../output-parser';
 
 describe('output-parser', () => {
@@ -305,6 +308,34 @@ describe('output-parser', () => {
         const colorInsideEmail = "andr\x1b[1me\x1b[0m@mikalsenai.no's Organization";
         expect(extractEmail(colorInsideEmail)).toBe('andre@mikalsenai.no');
       });
+    });
+  });
+
+  describe('provider patterns', () => {
+    it('returns pattern sets for codex provider', () => {
+      const patterns = getProviderPatterns('codex');
+      expect(patterns.rateLimit.length).toBeGreaterThan(0);
+      expect(patterns.authPrompts.length).toBeGreaterThan(0);
+      expect(patterns.sessionReady.length).toBeGreaterThan(0);
+    });
+
+    it('detects provider-specific rate limit signals', () => {
+      expect(hasProviderRateLimitMessage('RESOURCE_EXHAUSTED', 'gemini')).toBe(true);
+      expect(hasProviderRateLimitMessage('openai: error 429', 'codex')).toBe(true);
+      expect(hasProviderRateLimitMessage('API error: rate limit', 'opencode')).toBe(true);
+      expect(hasProviderRateLimitMessage('all good', 'openai')).toBe(false);
+    });
+  });
+
+  describe('detectProviderExit', () => {
+    it('uses Claude logic for Claude provider', () => {
+      expect(detectProviderExit('user@hostname:~$ ', 'claude')).toBe(true);
+      expect(detectProviderExit('● Working...', 'claude')).toBe(false);
+    });
+
+    it('detects shell prompt for non-Claude providers', () => {
+      expect(detectProviderExit('dev@localhost:~ % ', 'gemini')).toBe(true);
+      expect(detectProviderExit('Loading model...', 'codex')).toBe(false);
     });
   });
 });
